@@ -1,0 +1,23 @@
+.hero {
+  padding: 16px 20px 22px;
+  background-color: var(--tile);
+  background-image:
+    linear-gradient(var(--grout) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grout) 1px, transparent 1px);
+  background-size: 30px 30px;
+  background-position: -1px -1px;
+  border-bottom: 1px solid var(--line);
+}
+.top {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 14px;
+}
+.title {
+  font: inherit;
+}
+.address {
+  margin-top: 16px;
+  font-size: 15px;
+  color: var(--muted);
+}

@@ -1,8 +1,20 @@
+import { ShopHero } from "@/components/shop/ShopHero";
+import { demoShop } from "@/config/shop";
+import styles from "./page.module.css";
+
 export default function Home() {
   return (
-    <main style={{ padding: 24 }}>
-      <h1>BerberRandevu</h1>
-      <p>Proje iskeleti hazır. Tasarım ve ekranlar sonraki adımlarda eklenecek.</p>
-    </main>
+    <div className={styles.app}>
+      <ShopHero
+        district={demoShop.district}
+        name={demoShop.name}
+        address={demoShop.address}
+      />
+      <main className={styles.main}>
+        <div className="empty">
+          Randevu alma ekranı 4. adımda burada olacak.
+        </div>
+      </main>
+    </div>
   );
 }
