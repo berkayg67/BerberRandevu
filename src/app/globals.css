@@ -1,46 +1,57 @@
 /* =====================================================================
    BerberRandevu tasarım sistemi
-   İstanbul emaye sokak tabelası laciverti, kolonya sarısı ve berber fayansı.
+   Berber direğinin kobalt mavisi ve kırmızısı, kolonya sarısı, beyaz fayans.
    Renkler yalnızca buradaki değişkenlerden kullanılır; bileşenler sabit
    renk yazmaz. Karanlık mod aynı değişkenlerin [data-theme="dark"] karşılığıdır.
    ===================================================================== */
 
+/* Renk fikri: berber direği. Canlı kobalt mavisi ve direk kırmızısı; yüzeyler beyaz ve sakin,
+   renk yalnızca işlerde (seçim, ana düğme, bugün, durum) görünür. */
 :root {
   /* Yüzeyler */
-  --tile: #f2f4f3;
-  --grout: #e1e6e4;
+  --tile: #f5f6fa;
+  --grout: #e7eaf3;
   --paper: #ffffff;
-  --paper-hover: #f7f9fa;
-  --line: #dce2e5;
+  --paper-hover: #f6f7fb;
+  --line: #e0e4ee;
 
   /* Metin */
-  --ink: #18202e;
-  --muted: #5b6574;
-  --faint: #8c95a2;
+  --ink: #141a2e;
+  --muted: #555e75;
+  --faint: #8a92a6;
 
   /* Marka ve durum renkleri */
-  --enamel: #1d3e72;
-  --enamel-press: #16325d;
+  --enamel: #2447d6;
+  --enamel-press: #1f3cc0;
   --enamel-ink: #ffffff;
-  --enamel-tint: #e7edf7;
-  --accent-text: #1d3e72;
-  --kolonya: #f2d04b;
-  --kolonya-ink: #18202e;
-  --kolonya-tint: #fbf3cc;
-  --kolonya-text: #6b5600;
-  --oxblood: #9a2b2b;
-  --ox-tint: #f7e5e3;
-  --ok: #2b7652;
-  --ok-tint: #e2f1e9;
+  --enamel-tint: #e8edff;
+  --accent-text: #2442cc;
+  --pole: #e63946;
+  --kolonya: #ffd23f;
+  --kolonya-ink: #141a2e;
+  --kolonya-tint: #fff6d1;
+  --kolonya-text: #7a5c00;
+  --oxblood: #d62839;
+  --ox-tint: #ffe9eb;
+  --ok: #178045;
+  --ok-tint: #e3f6ea;
   --wa: #d9fdd3;
-  --wa-ink: #18202e;
+  --wa-ink: #141a2e;
   --wa-paper: #efeae2;
-  --scrim: rgba(24, 32, 46, 0.42);
+  --scrim: rgba(20, 26, 46, 0.42);
   /* Gölgeler nötr ve küçük; renkli gölge yok. */
-  --shadow-lift: 0 1px 2px rgba(17, 24, 39, 0.06), 0 8px 24px -12px rgba(17, 24, 39, 0.22);
+  --shadow-lift: 0 1px 2px rgba(20, 26, 46, 0.06), 0 8px 24px -12px rgba(20, 26, 46, 0.22);
   /* Buzlu cam: alt çubuklar ve yapışkan başlıklar içerik üstünde yüzer. */
   --material: rgba(255, 255, 255, 0.72);
   --material-edge: rgba(255, 255, 255, 0.6);
+  /* İmza: berber direğinin şeritleri. Yalnızca birkaç yerde, ince bir bant olarak. */
+  --pole-stripes: repeating-linear-gradient(
+    -45deg,
+    var(--pole) 0 8px,
+    #ffffff 8px 16px,
+    var(--enamel) 16px 24px,
+    #ffffff 24px 32px
+  );
 
   /* Şekil */
   --r-chip: 999px;
@@ -61,35 +72,36 @@
 }
 
 [data-theme="dark"] {
-  --tile: #12161c;
-  --grout: #1e242c;
-  --paper: #1a1f27;
-  --paper-hover: #20262f;
-  --line: #2b323c;
+  --tile: #0e1220;
+  --grout: #1a2033;
+  --paper: #161b2b;
+  --paper-hover: #1c2236;
+  --line: #283048;
 
-  --ink: #e9edf2;
-  --muted: #a1aab7;
-  --faint: #6f7987;
+  --ink: #eef1f8;
+  --muted: #a3abc0;
+  --faint: #6e7790;
 
-  --enamel: #3567b5;
-  --enamel-press: #2c5899;
+  --enamel: #3d5cf5;
+  --enamel-press: #3350e0;
   --enamel-ink: #ffffff;
-  --enamel-tint: #1c2a40;
-  --accent-text: #8fb3ec;
-  --kolonya: #f2d04b;
-  --kolonya-ink: #18202e;
-  --kolonya-tint: #3a3418;
-  --kolonya-text: #f2d97a;
-  --oxblood: #e8867b;
-  --ox-tint: #3a2222;
-  --ok: #6cc497;
-  --ok-tint: #17322a;
+  --enamel-tint: #1b2350;
+  --accent-text: #9fb1ff;
+  --pole: #ff5a67;
+  --kolonya: #ffd23f;
+  --kolonya-ink: #141a2e;
+  --kolonya-tint: #3a3216;
+  --kolonya-text: #ffdf70;
+  --oxblood: #ff7a85;
+  --ox-tint: #3a1d24;
+  --ok: #5fd391;
+  --ok-tint: #133224;
   --wa: #144d37;
-  --wa-ink: #e9edf2;
+  --wa-ink: #eef1f8;
   --wa-paper: #0e1714;
   --scrim: rgba(0, 0, 0, 0.6);
   --shadow-lift: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 28px -12px rgba(0, 0, 0, 0.8);
-  --material: rgba(22, 27, 34, 0.72);
+  --material: rgba(20, 25, 40, 0.72);
   --material-edge: rgba(255, 255, 255, 0.06);
 
   color-scheme: dark;

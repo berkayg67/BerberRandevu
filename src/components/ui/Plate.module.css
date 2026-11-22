@@ -1,6 +1,6 @@
 /* Emaye tabela. Renk her temada aynıdır; tabela bir nesnedir, arayüz değil. */
 .plate {
-  --enamel-face: #1d3e72;
+  --enamel-face: #2447d6;
   display: inline-flex;
   align-items: center;
   gap: 12px;
@@ -8,7 +8,7 @@
   border-radius: 10px;
   color: #fff;
   /* Aynı mavinin içinde hafif ton farkı: üstten vuran ışık. */
-  background: linear-gradient(180deg, #24498388 0%, transparent 55%), var(--enamel-face);
+  background: linear-gradient(180deg, #4a6af088 0%, transparent 55%), var(--enamel-face);
   outline: 2px solid rgba(255, 255, 255, 0.92);
   outline-offset: -6px;
   box-shadow:

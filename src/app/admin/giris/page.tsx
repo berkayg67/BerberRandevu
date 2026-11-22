@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import styles from "@/components/admin/admin.module.css";
 import { LoginForm } from "@/components/admin/LoginForm";
@@ -27,6 +28,9 @@ export default function LoginPage() {
         <h1>Yönetici girişi</h1>
         <p>Bu sayfa yalnızca sistem yöneticisi içindir.</p>
         <LoginForm login={login} />
+        <Link href="/" className={styles.loginBack}>
+          Ana sayfaya dön
+        </Link>
       </div>
     </div>
   );

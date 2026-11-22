@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { loginOwner } from "@/app/panel/actions";
@@ -26,6 +27,9 @@ export default function OwnerLoginPage() {
         <h1>Giriş yapın</h1>
         <p>Dükkânınızın randevularını buradan yönetirsiniz. Giriş bilgilerinizi size biz ilettik.</p>
         <LoginForm login={loginOwner} />
+        <Link href="/" className={styles.loginBack}>
+          Ana sayfaya dön
+        </Link>
       </div>
     </div>
   );

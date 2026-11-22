@@ -263,6 +263,8 @@
 
 .loginWrap {
   min-height: 100vh;
+  min-height: 100dvh;
+  position: relative;
   display: grid;
   place-items: center;
   padding: 24px;
@@ -273,9 +275,33 @@
 }
 .loginCard h1 {
   font: 600 30px/1.1 var(--f-display);
-  margin: 22px 0 6px;
+  margin: 24px 0 8px;
 }
 .loginCard p {
   color: var(--muted);
   margin-bottom: 20px;
+}
+
+/* Giriş sayfalarının üstünde direk şeridi; altta ana sayfaya dönüş. */
+.loginWrap::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 6px;
+  background: var(--pole-stripes);
+}
+.loginBack {
+  display: inline-block;
+  margin-top: 24px;
+  padding: 8px 0;
+  font-size: 15px;
+  color: var(--muted);
+  text-underline-offset: 3px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .loginBack:hover {
+    color: var(--ink);
+  }
 }

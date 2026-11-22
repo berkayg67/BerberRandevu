@@ -4,7 +4,7 @@ export type Theme = "light" | "dark";
 export const THEME_STORAGE_KEY = "tema";
 
 /** Telefonun durum çubuğu ve tarayıcı çerçevesi bu renge boyanır (sayfanın en üstündeki renk). */
-export const THEME_COLORS: Record<Theme, string> = { light: "#f2f4f3", dark: "#12161c" };
+export const THEME_COLORS: Record<Theme, string> = { light: "#f5f6fa", dark: "#0e1220" };
 
 /**
  * Sayfa çizilmeden önce <head> içinde çalışır; böylece karanlık modda

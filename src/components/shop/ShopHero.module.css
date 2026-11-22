@@ -10,6 +10,19 @@
   background-position: -1px -1px;
   border-bottom: 1px solid var(--line);
 }
+/* Direk şeridi: dükkân sayfasının en üstünde ince bir bant. */
+.hero {
+  position: relative;
+}
+.hero::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 6px;
+  background: var(--pole-stripes);
+}
 .top {
   display: flex;
   justify-content: flex-end;
@@ -38,6 +51,7 @@
     display: flex;
     flex-direction: column;
     padding: 24px 28px 28px;
+    overflow: hidden;
   }
   .top {
     margin-bottom: 48px;
