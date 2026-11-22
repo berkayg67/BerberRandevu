@@ -2,13 +2,25 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarIcon } from "./icons";
+import { CalendarIcon, PeopleIcon } from "./icons";
 import styles from "./panel.module.css";
 
-const ITEMS = [{ href: "/panel", label: "Takvim", icon: <CalendarIcon /> }];
+const ITEMS = [
+  { href: "/panel", label: "Takvim", icon: <CalendarIcon /> },
+  { href: "/panel/musteriler", label: "Müşteriler", icon: <PeopleIcon /> },
+];
 
+/** Aktif sekmeyi adres satırından bulan menü. */
 export function PanelNav() {
-  const path = usePathname();
+  return <NavLinks path={usePathname()} />;
+}
+
+/** Adres henüz okunmadan (sayfa hazırlanırken) gösterilen aynı menü. */
+export function PanelNavFallback() {
+  return <NavLinks path="" />;
+}
+
+function NavLinks({ path }: { path: string }) {
   return (
     <nav className={styles.nav} aria-label="Panel">
       <div className={styles.navIn}>

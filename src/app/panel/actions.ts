@@ -7,6 +7,7 @@ import { cancelAppointment, createAppointment, getDaySlots } from "@/server/book
 import { endSession, requireOwner, startSession } from "@/server/auth/current";
 import { authenticate } from "@/server/auth/service";
 import { getDb } from "@/server/db/client";
+import { blockCustomer, unblock } from "@/server/panel/customers";
 import { setNoShow } from "@/server/panel/service";
 
 export type PanelFormState = {
@@ -111,4 +112,34 @@ export async function setNoShowAction(appointmentId: string, noShow: boolean): P
   }
   refresh();
   return {};
+}
+
+/* ---------------- Müşteriler ---------------- */
+
+export async function blockAction(_prev: PanelFormState, fd: FormData): Promise<PanelFormState> {
+  const { shopId } = await requireOwner();
+  try {
+    const { cancelled } = await blockCustomer(getDb(), {
+      shopId,
+      name: text(fd, "name") || null,
+      phone: text(fd, "phone") || null,
+      note: text(fd, "note") || null,
+    });
+    refresh();
+    return {
+      ok: cancelled
+        ? `Engellendi. Yaklaşan ${cancelled} randevusu iptal edildi ve kendisine haber verildi.`
+        : "Engellendi.",
+    };
+  } catch (error) {
+    const values: Record<string, string> = {};
+    fd.forEach((v, k) => typeof v === "string" && !k.startsWith("$") && (values[k] = v));
+    return { error: messageOf(error), values };
+  }
+}
+
+export async function unblockAction(blockId: string) {
+  const { shopId } = await requireOwner();
+  await unblock(getDb(), shopId, blockId);
+  refresh();
 }

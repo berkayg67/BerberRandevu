@@ -74,6 +74,8 @@ Her dükkânın sahibi `/panel` adresinden kendi hesabıyla girer. Hesabı yöne
 - **Takvim:** günün randevuları saat sırasıyla; randevu sayısı, beklenen ciro, iptal ve gelmeyenler.
 - **Randevu ekle:** telefonla ya da dükkânda alınan randevular; yalnızca boş saatler listelenir. Engelli müşteriye ek onayla verilebilir.
 - **Randevu ayrıntısı:** müşteriyi arama, WhatsApp'tan yazma, iptal (müşteriye haber verilir), "gelmedi" işareti (teşekkür mesajı gitmez).
+- **Müşteriler:** randevu alan herkes otomatik listelenir; isim ya da telefonla arama, kaç kez geldiği ve gelmediği, toplam harcaması, geçmişi.
+- **Engelleme:** müşterinin sayfasından ya da elle (isim/telefon) engellenir; yaklaşan randevuları iptal edilir ve kendisine haber verilir. Engel yalnızca o dükkân için geçerlidir.
 - Berber yalnızca kendi dükkânını görür; dükkân kimliği her işlemde oturumdan alınır.
 
 ## Yönetim paneli
@@ -122,6 +124,6 @@ Hatalar `{ "error": { "code", "message" } }` biçiminde, Türkçe açıklamayla 
 5. Müşteri sayfası: randevu alma ve "Randevularım" ✅
 6. Berber paneli
    - 6a. Berber hesabı, giriş, takvim ✅
-   - 6b. Müşteriler ve engelleme
+   - 6b. Müşteriler ve engelleme ✅
    - 6c. Mesajlar ve ayarlar
 7. WhatsApp Business API ve mesaj gönderen zamanlayıcı

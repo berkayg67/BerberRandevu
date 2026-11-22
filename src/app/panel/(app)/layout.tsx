@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { logoutOwner } from "@/app/panel/actions";
-import { PanelNav } from "@/components/panel/PanelNav";
+import { PanelNav, PanelNavFallback } from "@/components/panel/PanelNav";
 import styles from "@/components/panel/panel.module.css";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Plate } from "@/components/ui/Plate";
@@ -44,7 +44,9 @@ export default function PanelLayout({ children }: LayoutProps<"/panel">) {
         </div>
       </header>
       {children}
-      <PanelNav />
+      <Suspense fallback={<PanelNavFallback />}>
+        <PanelNav />
+      </Suspense>
     </div>
   );
 }

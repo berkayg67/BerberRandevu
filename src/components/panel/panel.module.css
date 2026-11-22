@@ -278,3 +278,97 @@
   color: var(--ok);
   font-weight: 600;
 }
+
+/* Müşteriler */
+.search {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.custRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--line);
+  text-decoration: none;
+  transition: background-color 120ms ease;
+}
+.custRow:first-child {
+  border-top: 0;
+}
+@media (hover: hover) and (pointer: fine) {
+  .custRow:hover {
+    background: var(--paper-hover);
+  }
+}
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  background: var(--tile);
+  border: 1px solid var(--line);
+  color: var(--accent-text);
+  font: 600 18px/1 var(--f-display);
+}
+.avatarBlocked {
+  background: var(--ox-tint);
+  border-color: transparent;
+  color: var(--oxblood);
+}
+.custName {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  min-width: 0;
+}
+.custName span:first-child {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.count {
+  margin-left: auto;
+  text-align: right;
+  font-size: 13px;
+  color: var(--muted);
+  flex: 0 0 auto;
+}
+.count b {
+  display: block;
+  font: 600 22px/1 var(--f-display);
+  color: var(--ink);
+}
+.h2 {
+  font: 600 22px/1.1 var(--f-display);
+  margin: 28px 0 10px;
+}
+.blockCard {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-group);
+  padding: 16px 16px 4px;
+}
+.histRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 16px;
+  border-top: 1px solid var(--line);
+  font-size: 15px;
+}
+.histRow:first-child {
+  border-top: 0;
+}
+.back {
+  display: inline-block;
+  margin-bottom: 10px;
+  color: var(--accent-text);
+  font-weight: 600;
+  font-size: 15px;
+}
