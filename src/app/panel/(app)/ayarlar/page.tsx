@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import {
   saveContactAction,
+  saveProfileAction,
   saveHoursAction,
   saveRulesAction,
   saveServiceAction,
@@ -12,7 +13,9 @@ import { SaveForm } from "@/components/panel/SaveForm";
 import { formatPhone } from "@/lib/domain/phone";
 import { requireOwner } from "@/server/auth/current";
 import { getDb } from "@/server/db/client";
-import { getSettings, RULE_OPTIONS } from "@/server/panel/settings";
+import { getSettings, MAX_DESCRIPTION, RULE_OPTIONS } from "@/server/panel/settings";
+import { listPhotos, MAX_PHOTOS } from "@/server/panel/photos";
+import { PhotoManager } from "@/components/panel/PhotoManager";
 
 export const metadata: Metadata = { title: "Ayarlar", robots: { index: false } };
 
@@ -59,7 +62,8 @@ export default function SettingsPage() {
 
 async function Settings() {
   const { shopId } = await requireOwner();
-  const s = await getSettings(getDb(), shopId);
+  const db = getDb();
+  const [s, photos] = await Promise.all([getSettings(db, shopId), listPhotos(db, shopId)]);
 
   return (
     <>
@@ -69,6 +73,37 @@ async function Settings() {
           <p className={styles.sub}>Değişiklikler yeni randevular için geçerlidir; alınmış randevular olduğu gibi kalır.</p>
         </div>
       </div>
+
+      <h2 className={styles.h2}>Dükkân</h2>
+      <SaveForm action={saveProfileAction} className={styles.card}>
+        <div style={{ paddingTop: 12 }}>
+          <div className="field">
+            <label htmlFor="p-name">Dükkân adı</label>
+            <input id="p-name" name="name" className="input" defaultValue={s.profile.name} autoCapitalize="words" />
+          </div>
+          <div className="field">
+            <label htmlFor="p-district">İlçe</label>
+            <input id="p-district" name="district" className="input" defaultValue={s.profile.district} autoCapitalize="words" />
+          </div>
+          <div className="field" style={{ marginBottom: 0 }}>
+            <label htmlFor="p-desc">
+              Tanıtım <span className="hint">müşteri sayfasında görünür, en fazla {MAX_DESCRIPTION} karakter</span>
+            </label>
+            <textarea
+              id="p-desc"
+              name="description"
+              className="input"
+              rows={3}
+              maxLength={MAX_DESCRIPTION}
+              defaultValue={s.profile.description}
+              placeholder="Örnek: 1998'den beri Kuzguncuk'tayız. Sakal tıraşında sıcak havlu ve ustura kullanıyoruz."
+            />
+          </div>
+        </div>
+      </SaveForm>
+
+      <h2 className={styles.h2}>Fotoğraflar</h2>
+      <PhotoManager photos={photos} max={MAX_PHOTOS} />
 
       <h2 className={styles.h2}>Çalışma saatleri</h2>
       <SaveForm action={saveHoursAction} className={styles.card}>

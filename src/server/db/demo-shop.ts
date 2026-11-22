@@ -48,7 +48,7 @@ export async function seedDemoShop(db: Db): Promise<{ created: boolean; shopId: 
   if (existing) return { created: false, shopId: existing.id };
 
   return db.transaction(async (tx) => {
-    const [shop] = await tx.insert(shops).values(DEMO_SHOP).returning({ id: shops.id });
+    const [shop] = await tx.insert(shops).values({ ...DEMO_SHOP, approvedAt: new Date() }).returning({ id: shops.id });
     await tx.insert(workingHours).values(DEFAULT_HOURS.map((h) => ({ ...h, shopId: shop.id })));
     await tx.insert(staff).values(DEMO_STAFF.map((name, sort) => ({ shopId: shop.id, name, sort })));
     await tx

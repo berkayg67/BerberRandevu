@@ -7,9 +7,9 @@ import styles from "./admin.module.css";
 type Owner = { id: string; email: string; name: string; active: boolean; lastLogin: string | null };
 
 /** Yeni şifre yalnızca bir kez gösterilir; kopyalanıp berbere iletilir. */
-function Credentials({ c }: { c: { email: string; password: string } }) {
+export function Credentials({ c }: { c: { email: string; password: string } }) {
   const [copied, setCopied] = useState(false);
-  const text = `BerberRandevu paneli\nAdres: ${location.origin}/panel\nE-posta: ${c.email}\nŞifre: ${c.password}`;
+  const text = `Tıraş Vakti berber paneli\nAdres: ${location.origin}/panel\nE-posta: ${c.email}\nŞifre: ${c.password}`;
   return (
     <div className="callout" style={{ marginTop: 12, borderColor: "var(--enamel)" }}>
       <b style={{ color: "var(--ink)" }}>Giriş bilgileri (bir daha gösterilmeyecek)</b>

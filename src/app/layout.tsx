@@ -7,8 +7,8 @@ import "./globals.css";
 import { themeBootScript } from "@/components/theme/theme";
 
 export const metadata: Metadata = {
-  title: "BerberRandevu",
-  description: "Mahalle berberleri için online randevu sistemi",
+  title: { default: "Tıraş Vakti", template: "%s | Tıraş Vakti" },
+  description: "Berberler için online randevu sistemi. Müşteri boş saati görüp randevu alır, berber günü tek ekrandan yönetir.",
 };
 
 export const viewport: Viewport = {

@@ -1,6 +1,6 @@
 import { and, asc, eq } from "drizzle-orm";
 import { addDays, todayIn, toHHMM, toMinutes } from "@/lib/domain/time";
-import { services, shops, staff, workingHours } from "@/server/db/schema";
+import { services, shopPhotos, shops, staff, workingHours } from "@/server/db/schema";
 import type { Db } from "@/server/db/types";
 import { BookingError } from "@/server/booking/errors";
 
@@ -15,7 +15,7 @@ export async function getShopBySlug(db: Db, slug: string) {
 export async function getPublicShop(db: Db, slug: string, now: Date = new Date()) {
   const shop = await getShopBySlug(db, slug);
 
-  const [hours, staffRows, serviceRows] = await Promise.all([
+  const [hours, staffRows, serviceRows, photos] = await Promise.all([
     db
       .select({ weekday: workingHours.weekday, opens: workingHours.opens, closes: workingHours.closes })
       .from(workingHours)
@@ -36,6 +36,11 @@ export async function getPublicShop(db: Db, slug: string, now: Date = new Date()
       .from(services)
       .where(and(eq(services.shopId, shop.id), eq(services.active, true)))
       .orderBy(asc(services.sort), asc(services.createdAt)),
+    db
+      .select({ id: shopPhotos.id, width: shopPhotos.width, height: shopPhotos.height })
+      .from(shopPhotos)
+      .where(eq(shopPhotos.shopId, shop.id))
+      .orderBy(asc(shopPhotos.sort), asc(shopPhotos.createdAt)),
   ]);
 
   const today = todayIn(shop.timezone, now);
@@ -48,6 +53,8 @@ export async function getPublicShop(db: Db, slug: string, now: Date = new Date()
     district: shop.district,
     address: shop.address,
     phone: shop.phone,
+    description: shop.description,
+    photos,
     timezone: shop.timezone,
     today,
     lastBookableDay: addDays(today, shop.bookAheadDays - 1),

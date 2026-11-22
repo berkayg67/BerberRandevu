@@ -42,6 +42,7 @@ function book(overrides: Partial<Parameters<typeof createAppointment>[1]> = {}) 
       customerName: "Ahmet Yılmaz",
       customerPhone: "0532 123 45 67",
       source: "online",
+      consent: true,
       ...overrides,
     },
     NOW,

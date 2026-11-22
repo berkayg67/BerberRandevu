@@ -25,6 +25,13 @@ export async function getSettings(db: Db, shopId: string) {
     db.select().from(staff).where(eq(staff.shopId, shopId)).orderBy(asc(staff.sort), asc(staff.createdAt)),
   ]);
   return {
+    profile: {
+      name: shop!.name,
+      district: shop!.district,
+      description: shop!.description ?? "",
+      slug: shop!.slug,
+      approved: Boolean(shop!.approvedAt),
+    },
     contact: {
       phone: shop!.phone,
       address: shop!.address,
@@ -104,6 +111,26 @@ export async function saveRules(db: Db, shopId: string, rules: Settings["rules"]
     if (!(allowed as readonly number[]).includes(rules[key as keyof typeof rules])) fail("Seçilen değerlerden biri geçersiz.");
   }
   await db.update(shops).set(rules).where(eq(shops.id, shopId));
+}
+
+export const MAX_DESCRIPTION = 300;
+
+/** Müşteri sayfasında görünen dükkân adı, ilçe ve kısa tanıtım. Sayfa adresi (slug) değişmez. */
+export async function saveProfile(
+  db: Db,
+  shopId: string,
+  input: { name: string; district: string; description: string },
+) {
+  const name = input.name.trim().replace(/\s+/g, " ");
+  const district = input.district.trim();
+  const description = input.description.trim().replace(/\n{3,}/g, "\n\n");
+  if (name.length < 2 || name.length > 60) fail("Dükkân adı 2 ile 60 karakter arasında olmalı.");
+  if (district.length < 2 || district.length > 40) fail("İlçeyi yazın.");
+  if (description.length > MAX_DESCRIPTION) fail(`Tanıtım en fazla ${MAX_DESCRIPTION} karakter olabilir.`);
+  await db
+    .update(shops)
+    .set({ name, district, description: description || null })
+    .where(eq(shops.id, shopId));
 }
 
 export async function saveContact(db: Db, shopId: string, input: Settings["contact"]) {

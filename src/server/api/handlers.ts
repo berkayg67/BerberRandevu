@@ -111,6 +111,7 @@ const bookBody = z.object({
   time,
   name: z.string({ error: "Ad soyad gerekli." }).max(80),
   phone,
+  consent: z.boolean().optional(),
 });
 
 /* POST /api/shops/[slug]/appointments */
@@ -129,6 +130,7 @@ export function book(db: Db, slug: string, json: unknown, now = new Date()) {
         customerName: body.name,
         customerPhone: body.phone,
         source: "online",
+        consent: body.consent === true,
       },
       now,
     );

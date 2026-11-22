@@ -44,7 +44,7 @@ export const api = {
     ),
   book: (
     slug: string,
-    body: { serviceId: string; staffId: string; date: string; time: string; name: string; phone: string },
+    body: { serviceId: string; staffId: string; date: string; time: string; name: string; phone: string; consent?: boolean },
   ) =>
     call<{ appointment: Appointment; whatsappPreview: string | null }>(`/api/shops/${slug}/appointments`, {
       method: "POST",

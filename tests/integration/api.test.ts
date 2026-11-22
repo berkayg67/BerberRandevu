@@ -34,6 +34,7 @@ const body = (overrides: Record<string, unknown> = {}) => ({
   time: "10:00",
   name: "Ahmet Yılmaz",
   phone: "0532 123 45 67",
+  consent: true,
   ...overrides,
 });
 const errorCode = (r: { body: unknown }) => (r.body as { error: { code: string } }).error.code;

@@ -1,0 +1,225 @@
+.shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+}
+
+/* Markanın canlı alanı: kobalt üzerinde ince fayans derzi, altta direk şeridi. */
+.brand {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: calc(24px + env(safe-area-inset-top, 0px)) 20px 48px;
+  color: #fff;
+  background-color: #2447d6;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-position: -1px -1px;
+  overflow: hidden;
+}
+.brandLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: #fff;
+  text-decoration: none;
+  align-self: flex-start;
+}
+.brandLink svg {
+  border-radius: 13px;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
+}
+.brandName {
+  font: 600 32px/1 var(--f-display);
+  letter-spacing: -0.01em;
+}
+.tagline {
+  max-width: 28ch;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.86);
+}
+.stripe {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 8px;
+  background: var(--pole-stripes);
+}
+
+.formSide {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 0 0 calc(32px + env(safe-area-inset-bottom, 0px));
+}
+.card {
+  width: 100%;
+  max-width: 440px;
+  margin-top: -24px;
+  padding: 28px 20px 0;
+  border-radius: 24px 24px 0 0;
+  background: var(--paper);
+  position: relative;
+}
+.wide {
+  max-width: 560px;
+}
+.h1 {
+  font: 600 32px/1.05 var(--f-display);
+  letter-spacing: -0.01em;
+}
+.intro {
+  margin: 8px 0 24px;
+  color: var(--muted);
+}
+.intro p + p {
+  margin-top: 8px;
+}
+.footer {
+  display: grid;
+  gap: 4px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+  font-size: 15px;
+  color: var(--muted);
+}
+.footer a {
+  color: var(--accent-text);
+  font-weight: 600;
+  text-underline-offset: 3px;
+}
+a.back {
+  color: var(--muted);
+  font-weight: 400;
+  padding: 8px 0;
+  justify-self: start;
+}
+
+/* Form içi yardımcılar */
+.labelRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.labelRow a {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent-text);
+  text-underline-offset: 3px;
+  padding: 4px 0;
+}
+.section {
+  margin: 24px 0 12px;
+  font: 600 20px/1 var(--f-display);
+}
+.section:first-of-type {
+  margin-top: 8px;
+}
+.row2 {
+  display: grid;
+  gap: 0 12px;
+}
+.check {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: 12px;
+  align-items: start;
+  margin: 16px 0 8px;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--muted);
+  cursor: pointer;
+}
+.check input {
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+  accent-color: var(--enamel);
+}
+.check a {
+  color: var(--accent-text);
+  text-underline-offset: 3px;
+}
+.hint {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--faint);
+}
+.done {
+  padding: 20px;
+  border-radius: var(--r-group);
+  background: var(--ok-tint);
+  color: var(--ink);
+}
+.done h2 {
+  font: 600 22px/1.1 var(--f-display);
+  margin-bottom: 8px;
+}
+.done p + p {
+  margin-top: 8px;
+}
+
+@media (min-width: 600px) {
+  .row2 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 900px) {
+  .shell {
+    flex-direction: row;
+  }
+  .brand {
+    position: sticky;
+    top: 0;
+    width: 42%;
+    max-width: 560px;
+    height: 100vh;
+    height: 100dvh;
+    justify-content: center;
+    padding: 48px 56px;
+    background-size: 48px 48px;
+    gap: 20px;
+  }
+  .brandLink svg {
+    width: 96px;
+    height: 96px;
+    border-radius: 26px;
+  }
+  .brandName {
+    font-size: 64px;
+  }
+  .tagline {
+    font-size: 20px;
+  }
+  .stripe {
+    left: auto;
+    top: 0;
+    width: 10px;
+    height: auto;
+  }
+  .formSide {
+    align-items: center;
+    padding: 48px 32px;
+  }
+  .card {
+    margin-top: 0;
+    padding: 0;
+    border-radius: 0;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .footer a:hover,
+  .labelRow a:hover {
+    text-decoration-thickness: 2px;
+  }
+}

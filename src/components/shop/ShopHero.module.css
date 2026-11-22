@@ -44,6 +44,47 @@
 .hours {
   display: none;
 }
+.description {
+  margin-top: 12px;
+  max-width: 52ch;
+  font-size: 15px;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+/* Fotoğraflar: yatay kaydırılan şerit, her kare kenara oturur. */
+.gallery {
+  list-style: none;
+  display: flex;
+  gap: 8px;
+  margin: 16px -20px 0;
+  padding: 0 20px 4px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 20px;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+.gallery::-webkit-scrollbar {
+  display: none;
+}
+.gallery li {
+  flex: 0 0 auto;
+  width: min(78vw, 320px);
+  scroll-snap-align: start;
+}
+.gallery li:only-child {
+  width: 100%;
+}
+.gallery img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 14px;
+  background: var(--grout);
+  box-shadow: 0 0 0 1px var(--line);
+}
 
 @media (min-width: 960px) {
   .hero {
@@ -58,6 +99,17 @@
   }
   .facts {
     margin-top: 24px;
+  }
+  .gallery {
+    margin: 20px -28px 0;
+    padding: 0 28px 4px;
+    scroll-padding-inline: 28px;
+  }
+  .gallery li {
+    width: 82%;
+  }
+  .gallery {
+    margin-bottom: 24px;
   }
   .hours {
     display: grid;

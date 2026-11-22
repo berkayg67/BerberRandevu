@@ -36,6 +36,8 @@ export function BookingFlow({ shop }: { shop: PublicShop }) {
   const [pendingTime, setPendingTime] = useState<string | null>(null);
   const [slotLost, setSlotLost] = useState(false);
   const [customer, setCustomer] = useState({ name: "", phone: "" });
+  /** İsteğe bağlı açık rıza: randevu sonrası teşekkür ve yorum isteği mesajı. */
+  const [thanksConsent, setThanksConsent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [result, setResult] = useState<{ appointment: Appointment; preview: string | null } | null>(null);
@@ -86,6 +88,7 @@ export function BookingFlow({ shop }: { shop: PublicShop }) {
         time: pendingTime,
         name,
         phone: customer.phone,
+        consent: thanksConsent,
       });
       saveCustomer({ name, phone: customer.phone });
       setResult({ appointment: r.appointment, preview: r.whatsappPreview });
@@ -352,8 +355,23 @@ export function BookingFlow({ shop }: { shop: PublicShop }) {
               />
             </div>
             <p className={styles.privacy}>
-              Adınız ve telefonunuz yalnızca bu randevu için {shop.name} ile paylaşılır.
+              Adınız ve telefonunuz randevunuzu oluşturmak ve size WhatsApp&apos;tan onay ile hatırlatma göndermek için{" "}
+              {shop.name} ile paylaşılır. Ayrıntılar için{" "}
+              <a href="/yasal/musteri-aydinlatma" target="_blank" rel="noopener">
+                aydınlatma metnini
+              </a>{" "}
+              okuyabilirsiniz.
             </p>
+            <label className={styles.consent}>
+              <input type="checkbox" checked={thanksConsent} onChange={(e) => setThanksConsent(e.target.checked)} />
+              <span>
+                Randevumdan sonra teşekkür ve yorum isteği mesajı gönderilmesine{" "}
+                <a href="/yasal/acik-riza" target="_blank" rel="noopener">
+                  açık rıza
+                </a>{" "}
+                veriyorum. <em>İsteğe bağlı; vermezseniz randevunuz aynen alınır.</em>
+              </span>
+            </label>
             <p className="form-error" role="alert">
               {formError}
             </p>

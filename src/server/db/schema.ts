@@ -16,6 +16,7 @@ import { sql } from "drizzle-orm";
 import {
   boolean,
   check,
+  customType,
   date,
   index,
   integer,
@@ -29,6 +30,11 @@ import {
   unique,
   uuid,
 } from "drizzle-orm/pg-core";
+
+/** Fotoğraf baytları. postgres.js Buffer döner, PGlite Uint8Array; ikisi de Uint8Array'dir. */
+const bytea = customType<{ data: Uint8Array; driverData: Uint8Array }>({
+  dataType: () => "bytea",
+});
 
 const createdAt = () =>
   timestamp("created_at", { withTimezone: true }).notNull().defaultNow();
@@ -85,6 +91,10 @@ export const shops = pgTable(
     ownerPhone: text("owner_phone"),
     /** Yalnızca yöneticinin gördüğü notlar. */
     adminNotes: text("admin_notes"),
+    /** Müşteri sayfasında görünen kısa tanıtım. */
+    description: text("description"),
+    /** Kayıt başvurusu onaylandığı an. Boşsa başvuru yönetici onayı bekliyor. */
+    approvedAt: timestamp("approved_at", { withTimezone: true }),
     createdAt: createdAt(),
   },
   (t) => [
@@ -160,6 +170,8 @@ export const customers = pgTable(
       .references(() => shops.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
     phone: text("phone").notNull(),
+    /** KVKK aydınlatma metni ve WhatsApp bildirimi için açık rızanın en son verildiği an. */
+    consentAt: timestamp("consent_at", { withTimezone: true }),
     createdAt: createdAt(),
   },
   (t) => [
@@ -276,6 +288,8 @@ export const users = pgTable(
     shopId: uuid("shop_id").references(() => shops.id, { onDelete: "cascade" }),
     active: boolean("active").notNull().default(true),
     lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
+    /** Kullanım koşulları ve KVKK metninin kabul edildiği an (kendi kaydolan berberler). */
+    termsAcceptedAt: timestamp("terms_accepted_at", { withTimezone: true }),
     createdAt: createdAt(),
   },
   (t) => [
@@ -319,5 +333,41 @@ export const payments = pgTable(
     unique("payments_shop_period").on(t.shopId, t.period),
     check("payments_period_format", sql`${t.period} ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'`),
     check("payments_amount", sql`${t.amountKurus} >= 0`),
+  ],
+).enableRLS();
+
+/** "Şifremi unuttum" talepleri. Yönetici yeni şifre üretip berbere iletir. */
+export const passwordResetRequests = pgTable(
+  "password_reset_requests",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [index("password_reset_open_idx").on(t.resolvedAt)],
+).enableRLS();
+
+/** Dükkân fotoğrafları. Tarayıcıda küçültülüp (en uzun kenar 1600px, JPEG) veritabanında saklanır. */
+export const shopPhotos = pgTable(
+  "shop_photos",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    shopId: uuid("shop_id")
+      .notNull()
+      .references(() => shops.id, { onDelete: "cascade" }),
+    mime: text("mime").notNull(),
+    data: bytea("data").notNull(),
+    width: smallint("width").notNull(),
+    height: smallint("height").notNull(),
+    sort: smallint("sort").notNull().default(0),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("shop_photos_shop_idx").on(t.shopId, t.sort),
+    check("shop_photos_mime", sql`${t.mime} in ('image/jpeg', 'image/webp')`),
+    check("shop_photos_size", sql`octet_length(${t.data}) <= 1500000`),
   ],
 ).enableRLS();

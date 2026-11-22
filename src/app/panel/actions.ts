@@ -5,11 +5,13 @@ import { redirect } from "next/navigation";
 import { BookingError } from "@/server/booking/errors";
 import { cancelAppointment, createAppointment, getDaySlots } from "@/server/booking/service";
 import { endSession, requireOwner, startSession } from "@/server/auth/current";
-import { authenticate } from "@/server/auth/service";
+import { AccountError, authenticate } from "@/server/auth/service";
+import { isShopApproved, registerShop, requestPasswordReset } from "@/server/signup/service";
 import { getDb } from "@/server/db/client";
 import { blockCustomer, unblock } from "@/server/panel/customers";
 import { setNoShow } from "@/server/panel/service";
-import { saveContact, saveHours, saveRules, saveService, saveStaff } from "@/server/panel/settings";
+import { saveContact, saveHours, saveProfile, saveRules, saveService, saveStaff } from "@/server/panel/settings";
+import { deletePhoto, makeCover } from "@/server/panel/photos";
 
 export type PanelFormState = {
   error?: string;
@@ -38,8 +40,52 @@ export async function loginOwner(_prev: PanelFormState, fd: FormData): Promise<P
     await new Promise((r) => setTimeout(r, 600));
     return { error: "E-posta ya da şifre yanlış.", values: { email } };
   }
+  if (user.shopId && !(await isShopApproved(getDb(), user.shopId))) {
+    return {
+      error: "Başvurunuz inceleniyor. Onaylandığında bu bilgilerle giriş yapabilirsiniz.",
+      values: { email },
+    };
+  }
   await startSession(user.id);
   redirect("/panel");
+}
+
+/* ---------------- Kayıt ve şifremi unuttum ---------------- */
+
+export type SignupState = { error?: string; done?: boolean; values?: Record<string, string> };
+
+export async function signupAction(_prev: SignupState, fd: FormData): Promise<SignupState> {
+  const values: Record<string, string> = {};
+  for (const k of ["shopName", "district", "address", "ownerName", "phone", "email"]) values[k] = text(fd, k);
+  try {
+    await registerShop(getDb(), {
+      shopName: values.shopName,
+      district: values.district,
+      address: values.address,
+      ownerName: values.ownerName,
+      phone: values.phone,
+      email: values.email,
+      password: String(fd.get("password") ?? ""),
+      acceptTerms: fd.get("terms") === "on",
+    });
+    return { done: true, values: { email: values.email } };
+  } catch (error) {
+    if (error instanceof AccountError) return { error: error.message, values };
+    console.error("[kayıt] beklenmeyen hata", error);
+    return { error: "Kayıt alınamadı. Biraz sonra tekrar deneyin.", values };
+  }
+}
+
+export async function forgotPasswordAction(_prev: SignupState, fd: FormData): Promise<SignupState> {
+  const email = text(fd, "email");
+  try {
+    await requestPasswordReset(getDb(), email);
+    return { done: true, values: { email } };
+  } catch (error) {
+    if (error instanceof AccountError) return { error: error.message, values: { email } };
+    console.error("[şifre] beklenmeyen hata", error);
+    return { error: "Talep alınamadı. Biraz sonra tekrar deneyin.", values: { email } };
+  }
 }
 
 export async function logoutOwner() {
@@ -190,6 +236,34 @@ export async function saveRulesAction(_prev: PanelFormState, fd: FormData): Prom
       thanksMinutesAfter: num(fd, "thanksMinutesAfter"),
     }),
   );
+}
+
+export async function saveProfileAction(_prev: PanelFormState, fd: FormData): Promise<PanelFormState> {
+  const { shopId } = await requireOwner();
+  return settle(() =>
+    saveProfile(getDb(), shopId, {
+      name: text(fd, "name"),
+      district: text(fd, "district"),
+      description: String(fd.get("description") ?? ""),
+    }),
+  );
+}
+
+export async function deletePhotoAction(photoId: string) {
+  const { shopId } = await requireOwner();
+  await deletePhoto(getDb(), shopId, photoId);
+  refresh();
+}
+
+export async function makeCoverAction(photoId: string) {
+  const { shopId } = await requireOwner();
+  try {
+    await makeCover(getDb(), shopId, photoId);
+  } catch (error) {
+    return { error: messageOf(error) };
+  }
+  refresh();
+  return {};
 }
 
 export async function saveContactAction(_prev: PanelFormState, fd: FormData): Promise<PanelFormState> {

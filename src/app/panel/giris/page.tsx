@@ -3,9 +3,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { loginOwner } from "@/app/panel/actions";
-import styles from "@/components/admin/admin.module.css";
 import { LoginForm } from "@/components/admin/LoginForm";
-import { Plate } from "@/components/ui/Plate";
+import { AuthShell } from "@/components/auth/AuthShell";
 import { getCurrentUser } from "@/server/auth/current";
 
 export const metadata: Metadata = { title: "Berber girişi", robots: { index: false } };
@@ -18,19 +17,19 @@ async function AlreadySignedIn() {
 
 export default function OwnerLoginPage() {
   return (
-    <div className={styles.loginWrap}>
-      <div className={styles.loginCard}>
-        <Suspense>
-          <AlreadySignedIn />
-        </Suspense>
-        <Plate district="Berber paneli" name="BerberRandevu" />
-        <h1>Giriş yapın</h1>
-        <p>Dükkânınızın randevularını buradan yönetirsiniz. Giriş bilgilerinizi size biz ilettik.</p>
-        <LoginForm login={loginOwner} />
-        <Link href="/" className={styles.loginBack}>
-          Ana sayfaya dön
-        </Link>
-      </div>
-    </div>
+    <AuthShell
+      title="Berber girişi"
+      intro={<p>Dükkânınızın randevularını, müşterilerini ve ayarlarını buradan yönetirsiniz.</p>}
+      footer={
+        <p>
+          Hesabınız yok mu? <Link href="/panel/kayit">Dükkânınızı kaydedin</Link>
+        </p>
+      }
+    >
+      <Suspense>
+        <AlreadySignedIn />
+      </Suspense>
+      <LoginForm login={loginOwner} forgotHref="/panel/sifremi-unuttum" />
+    </AuthShell>
   );
 }

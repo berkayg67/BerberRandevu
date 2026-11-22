@@ -157,6 +157,12 @@ export type CreateAppointmentInput = {
   source: "online" | "panel";
   /** Dükkân engelli bir müşteriye yine de randevu verebilir. */
   allowBlocked?: boolean;
+  /**
+   * Müşteri, randevu sonrası teşekkür ve yorum isteği WhatsApp mesajı için açık rıza verdi mi?
+   * İsteğe bağlıdır ve randevunun şartı olamaz (KVKK). Onay, randevu onayı ve hatırlatma için
+   * gerekmez; o mesajlar randevu hizmetinin gereğidir. Rıza yoksa teşekkür mesajı kuyruğa yazılmaz.
+   */
+  consent?: boolean;
 };
 
 export async function createAppointment(
@@ -208,8 +214,11 @@ export async function createAppointment(
   return db.transaction(async (tx) => {
     const [customer] = await tx
       .insert(customers)
-      .values({ shopId: shop.id, name, phone })
-      .onConflictDoUpdate({ target: [customers.shopId, customers.phone], set: { name } })
+      .values({ shopId: shop.id, name, phone, consentAt: input.consent ? now : null })
+      .onConflictDoUpdate({
+        target: [customers.shopId, customers.phone],
+        set: input.consent ? { name, consentAt: now } : { name },
+      })
       .returning();
 
     // Seçilen usta aynı anda gelen başka bir istekle dolmuş olabilir:
@@ -254,6 +263,9 @@ export async function createAppointment(
       {
         reminderMinutesBefore: shop.reminderMinutesBefore,
         thanksMinutesAfter: shop.thanksMinutesAfter,
+        // Panelden eklenen randevuda müşteri telefonla aranır; teşekkür mesajı dükkânın
+        // önceki uygulamasıyla aynı kalır. Online randevuda yalnızca rıza varsa gider.
+        includeThanks: input.source === "panel" || input.consent === true,
       },
       now,
     );

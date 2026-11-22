@@ -40,6 +40,8 @@ export type AppointmentFacts = {
 export type MessageTiming = {
   reminderMinutesBefore: number;
   thanksMinutesAfter: number;
+  /** Teşekkür ve yorum isteği mesajı eklensin mi (açık rıza gerektirir). Varsayılan: evet. */
+  includeThanks?: boolean;
 };
 
 function when(f: AppointmentFacts) {
@@ -129,13 +131,15 @@ export function planBookingMessages(
     drafts.push({ kind: "reminder", recipient: "customer", toPhone: customerPhone, body: templates.reminder(f), sendAt: reminderAt });
   }
 
-  drafts.push({
-    kind: "thanks",
-    recipient: "customer",
-    toPhone: customerPhone,
-    body: templates.thanks(f),
-    sendAt: new Date(f.endsAt.getTime() + timing.thanksMinutesAfter * 60_000),
-  });
+  if (timing.includeThanks !== false) {
+    drafts.push({
+      kind: "thanks",
+      recipient: "customer",
+      toPhone: customerPhone,
+      body: templates.thanks(f),
+      sendAt: new Date(f.endsAt.getTime() + timing.thanksMinutesAfter * 60_000),
+    });
+  }
   return drafts;
 }
 

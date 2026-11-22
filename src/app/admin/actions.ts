@@ -21,6 +21,7 @@ import {
   setOwnerActive,
 } from "@/server/auth/service";
 import { getDb } from "@/server/db/client";
+import { approveShop, dismissResetRequest, rejectShop, resolveResetRequest } from "@/server/signup/service";
 
 export type FormState = {
   error?: string;
@@ -199,5 +200,46 @@ export async function resetOwnerAction(shopId: string, userId: string): Promise<
 export async function setOwnerActiveAction(shopId: string, userId: string, active: boolean) {
   await requireAdmin();
   await setOwnerActive(getDb(), { shopId, userId, active });
+  refresh();
+}
+
+/* ---------------- Başvurular ve şifre talepleri ---------------- */
+
+export async function approveShopAction(shopId: string) {
+  await requireAdmin();
+  try {
+    await approveShop(getDb(), shopId);
+  } catch (error) {
+    return { error: error instanceof AccountError ? error.message : messageOf(error) };
+  }
+  refresh();
+  return {};
+}
+
+export async function rejectShopAction(shopId: string) {
+  await requireAdmin();
+  try {
+    await rejectShop(getDb(), shopId);
+  } catch (error) {
+    return { error: error instanceof AccountError ? error.message : messageOf(error) };
+  }
+  refresh();
+  return {};
+}
+
+export async function resolveResetAction(requestId: string): Promise<OwnerState> {
+  await requireAdmin();
+  try {
+    const credentials = await resolveResetRequest(getDb(), requestId);
+    refresh();
+    return { credentials };
+  } catch (error) {
+    return { error: error instanceof AccountError ? error.message : messageOf(error) };
+  }
+}
+
+export async function dismissResetAction(requestId: string) {
+  await requireAdmin();
+  await dismissResetRequest(getDb(), requestId);
   refresh();
 }

@@ -305,3 +305,59 @@
     color: var(--ink);
   }
 }
+
+/* Başvurular ve şifre talepleri */
+.requests {
+  margin-bottom: 32px;
+}
+.requests .h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--pole);
+  color: #fff;
+  font: 600 16px/1 var(--f-body);
+}
+.requestRow {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  background: var(--paper);
+}
+.requestRow + .requestRow {
+  border-top: 1px solid var(--line);
+}
+.requestText {
+  display: grid;
+  gap: 4px;
+  font-size: 15px;
+  color: var(--muted);
+}
+.requestText b {
+  font-size: 17px;
+  color: var(--ink);
+}
+.requestDate {
+  font-size: 13px;
+  color: var(--faint);
+}
+.requestActions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+@media (min-width: 720px) {
+  .requestRow {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+}

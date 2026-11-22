@@ -15,10 +15,12 @@ type ShopHeroProps = {
   /** Haftalık saatler; geniş ekranda fayans duvarında listelenir. */
   hours?: { weekday: number; opens: string; closes: string }[];
   lunch?: { start: string; end: string } | null;
+  description?: string | null;
+  photos?: { id: string; width: number; height: number }[];
 };
 
 /** Müşteri sayfasının fayans duvarı: emaye tabela, durum, adres ve (geniş ekranda) saatler. */
-export function ShopHero({ district, name, address, status, hours, lunch }: ShopHeroProps) {
+export function ShopHero({ district, name, address, status, hours, lunch, description, photos = [] }: ShopHeroProps) {
   return (
     <header className={styles.hero}>
       <div className={styles.top}>
@@ -31,6 +33,25 @@ export function ShopHero({ district, name, address, status, hours, lunch }: Shop
         {status}
         <p className={styles.address}>{address}</p>
       </div>
+      {description && <p className={styles.description}>{description}</p>}
+      {photos.length > 0 && (
+        <ul className={styles.gallery} aria-label={`${name} fotoğrafları`}>
+          {photos.map((p, i) => (
+            <li key={p.id}>
+              {/* Fotoğraflar yüklenirken 1600px'e indirildi; ayrıca işlenmeden sunulur. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={`/api/photos/${p.id}`}
+                alt={i === 0 ? `${name} dükkânı` : ""}
+                width={p.width}
+                height={p.height}
+                loading={i === 0 ? "eager" : "lazy"}
+                decoding="async"
+              />
+            </li>
+          ))}
+        </ul>
+      )}
       {hours && (
         <dl className={styles.hours} aria-label="Çalışma saatleri">
           {ORDER.map((d) => {

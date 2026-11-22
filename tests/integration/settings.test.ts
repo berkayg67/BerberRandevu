@@ -124,7 +124,7 @@ describe("hizmetler ve ustalar", () => {
     const emre = s.staff[1];
     await createAppointment(
       db,
-      { shopId, serviceId: s.services[0].id, staffId: emre.id, date: "2026-11-20", time: "10:00", customerName: "Ali Veli", customerPhone: "05321234567", source: "online" },
+      { shopId, serviceId: s.services[0].id, staffId: emre.id, date: "2026-11-20", time: "10:00", customerName: "Ali Veli", customerPhone: "05321234567", source: "online", consent: true },
       NOW,
     );
     expect(await saveStaff(db, shopId, { id: emre.id, name: "Emre", active: false }, NOW)).toEqual({ upcoming: 1 });
@@ -140,13 +140,13 @@ describe("mesajlar", () => {
     const s = await getSettings(db, shopId);
     const a = await createAppointment(
       db,
-      { shopId, serviceId: s.services[0].id, staffId: "any", date: "2026-11-20", time: "10:00", customerName: "Ali Veli", customerPhone: "05321234567", source: "online" },
+      { shopId, serviceId: s.services[0].id, staffId: "any", date: "2026-11-20", time: "10:00", customerName: "Ali Veli", customerPhone: "05321234567", source: "online", consent: true },
       NOW,
     );
     const o = await getSettings(db, otherId);
     await createAppointment(
       db,
-      { shopId: otherId, serviceId: o.services[0].id, staffId: "any", date: "2026-11-20", time: "10:00", customerName: "Başka", customerPhone: "05331112233", source: "online" },
+      { shopId: otherId, serviceId: o.services[0].id, staffId: "any", date: "2026-11-20", time: "10:00", customerName: "Başka", customerPhone: "05331112233", source: "online", consent: true },
       NOW,
     );
     let r = await listMessages(db, shopId, "sirada", NOW);

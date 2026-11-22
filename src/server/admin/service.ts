@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte, inArray } from "drizzle-orm";
+import { and, count, desc, eq, gte, inArray, isNotNull } from "drizzle-orm";
 import { normalizePhone } from "@/lib/domain/phone";
 import { periodOf, periodsBetween, type Period } from "@/lib/domain/period";
 import { slugify } from "@/lib/domain/slug";
@@ -39,7 +39,8 @@ function billingStatus(
 /** Yönetim ana sayfası: tüm dükkânlar, tahsilat durumu ve son 30 günün randevu sayısı. */
 export async function listShopsOverview(db: Db, now: Date = new Date()) {
   const currentPeriod = periodOf(todayIn(TZ, now));
-  const rows = await db.select().from(shops).orderBy(desc(shops.createdAt));
+  // Onay bekleyen başvurular ayrı listelenir (bkz. signup/service).
+  const rows = await db.select().from(shops).where(isNotNull(shops.approvedAt)).orderBy(desc(shops.createdAt));
   const ids = rows.map((r) => r.id);
   if (ids.length === 0) {
     return { currentPeriod, shops: [], totals: { active: 0, collectedThisMonthKurus: 0, outstandingKurus: 0 } };
@@ -132,8 +133,12 @@ function checkPhones(input: Pick<ShopInput, "notifyPhone" | "ownerPhone">) {
   return { notify, owner };
 }
 
+/** Sistem sayfalarıyla çakışan adresler dükkân adresi olamaz. */
+export const RESERVED_SLUGS = new Set(["admin", "panel", "api", "yasal", "giris", "kayit", "www", "tasarim", "_next"]);
+
 async function uniqueSlug(db: Db, name: string) {
-  const base = slugify(name) || "berber";
+  let base = slugify(name) || "berber";
+  if (RESERVED_SLUGS.has(base)) base = `${base}-berber`;
   const taken = new Set(
     (await db.select({ slug: shops.slug }).from(shops)).map((r) => r.slug),
   );
@@ -160,6 +165,8 @@ export async function createShop(db: Db, input: ShopInput) {
         monthlyFeeKurus: input.monthlyFeeKurus,
         billingStart: input.billingStart,
         adminNotes: input.adminNotes,
+        // Yöneticinin kendi açtığı dükkân onay beklemez.
+        approvedAt: new Date(),
       })
       .returning();
     await tx.insert(workingHours).values(DEFAULT_HOURS.map((h) => ({ ...h, shopId: shop.id })));

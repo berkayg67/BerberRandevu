@@ -5,6 +5,8 @@ import { Suspense } from "react";
 import styles from "@/components/booking/booking.module.css";
 import { CustomerApp } from "@/components/booking/CustomerApp";
 import { OpenStatus } from "@/components/booking/OpenStatus";
+import Link from "next/link";
+import { LegalLinks } from "@/components/legal/LegalLinks";
 import { ShopHero } from "@/components/shop/ShopHero";
 import { BookingError } from "@/server/booking/errors";
 import { getDb } from "@/server/db/client";
@@ -55,9 +57,17 @@ async function Shop({ params }: { params: Promise<{ slug: string }> }) {
         status={<OpenStatus hours={shop.hours} lunch={shop.lunch} timeZone={shop.timezone} />}
         hours={shop.hours}
         lunch={shop.lunch}
+        description={shop.description}
+        photos={shop.photos}
       />
       <div className={styles.column}>
         <CustomerApp shop={shop} />
+        <footer className={styles.legalFoot}>
+          <LegalLinks />
+          <p>
+            Randevu sistemi: <Link href="/">Tıraş Vakti</Link>
+          </p>
+        </footer>
       </div>
     </>
   );

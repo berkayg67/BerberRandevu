@@ -45,7 +45,7 @@ async function book(sid: string, date: string, time: string, name: string, phone
   const shop = await getPanelShop(db, sid, NOW);
   return createAppointment(
     db,
-    { shopId: sid, serviceId: shop.services[0].id, staffId: "any", date, time, customerName: name, customerPhone: phone, source: "online" },
+    { shopId: sid, serviceId: shop.services[0].id, staffId: "any", date, time, customerName: name, customerPhone: phone, source: "online", consent: true },
     NOW,
   );
 }
