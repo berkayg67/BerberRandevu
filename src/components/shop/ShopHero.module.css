@@ -16,8 +16,12 @@
 .title {
   font: inherit;
 }
-.address {
+.facts {
   margin-top: 16px;
+  display: grid;
+  gap: 3px;
   font-size: 15px;
+}
+.address {
   color: var(--muted);
 }

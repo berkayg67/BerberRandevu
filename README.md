@@ -58,6 +58,15 @@ PostgreSQL kullanılır (Supabase). Önemli kurallar veritabanının kendisinde 
 
 Bağlantı bilgileri `.env.local` dosyasındadır (Git'e gitmez). Örnek: `.env.example`.
 
+## Müşteri sayfası
+
+Her dükkânın kendi adresi vardır: `/berber-demo`, `/berber-murat-dursun` gibi. Ana adres şimdilik demo dükkâna yönlenir.
+
+- **Randevu al:** hizmet, usta (ya da "fark etmez"), gün ve saat seçilir; ad ve telefonla onaylanır. Onay ekranında WhatsApp'a gidecek mesaj gösterilir.
+- **Randevularım:** telefon numarasıyla aktif randevular listelenir ve iptal edilir. `/{dükkân}#randevularim` bağlantısı doğrudan bu sekmeyi açar.
+- Aynı saati o sırada başkası alırsa müşteriye söylenir ve saatler yenilenir.
+- Ad ve telefon bir sonraki randevu için yalnızca o cihazda hatırlanır.
+
 ## Yönetim paneli
 
 `/admin` adresi yalnızca yönetici hesabıyla açılır. Buradan:
@@ -101,6 +110,6 @@ Hatalar `{ "error": { "code", "message" } }` biçiminde, Türkçe açıklamayla 
    - 3a. Şema, çakışma ve engelleme kuralları, mesaj kuyruğu, testler ✅
    - 3b. Supabase bağlantısı, örnek dükkân verisi, API ✅
 4. Yönetim paneli: dükkânlar ve tahsilat ✅
-5. Müşteri sayfası: randevu alma ve "Randevularım"
+5. Müşteri sayfası: randevu alma ve "Randevularım" ✅
 6. Berber paneli ve girişi: takvim, mesajlar, müşteriler, ayarlar
 7. WhatsApp Business API ve mesaj gönderen zamanlayıcı
