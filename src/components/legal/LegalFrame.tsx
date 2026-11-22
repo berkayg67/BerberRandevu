@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/brand/Logo";
-import { COMPANY_READY, LEGAL_UPDATED } from "@/lib/legal/company";
+import { LEGAL_UPDATED } from "@/lib/legal/company";
 import type { LegalDoc } from "@/lib/legal/docs";
 import styles from "./legal.module.css";
 
@@ -22,12 +22,6 @@ export function LegalFrame({ doc }: { doc: LegalDoc }) {
     <div className={styles.page}>
       <LegalHeader />
       <main className={styles.main}>
-        {!COMPANY_READY && (
-          <p className={styles.draft} role="note">
-            Taslak: işletme bilgileri henüz girilmedi. Yayına almadan önce <code>src/lib/legal/company.ts</code>{" "}
-            dosyasını doldurun.
-          </p>
-        )}
         <h1 className={styles.h1}>{doc.title}</h1>
         <p className={styles.updated}>Son güncelleme: {LEGAL_UPDATED}</p>
         <p className={styles.lead}>{doc.intro}</p>
