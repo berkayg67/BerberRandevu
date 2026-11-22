@@ -22,7 +22,10 @@
   overscroll-behavior: contain;
   background: var(--paper);
   border-radius: var(--r-sheet) var(--r-sheet) 0 0;
-  padding: 0 20px calc(24px + env(safe-area-inset-bottom));
+  padding: 0 20px calc(24px + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -1px 0 var(--material-edge), 0 -12px 32px -16px rgba(17, 24, 39, 0.3);
+  /* İçerik sonuna gelince kaydırma arkadaki sayfaya geçmez. */
+  will-change: transform;
   transform: translateY(100%);
   /* Açılış: iOS çekmece eğrisi. Kapanış daha hızlı. */
   transition: transform 220ms var(--ease-out);
@@ -39,8 +42,9 @@
   display: flex;
   justify-content: center;
   margin: 0 -20px;
-  padding: 10px 0 8px;
+  padding: 10px 0 12px;
   background: var(--paper);
+  /* Bu alan dikey sürüklemeyi kendisi yönetir. */
   touch-action: none;
   cursor: grab;
 }

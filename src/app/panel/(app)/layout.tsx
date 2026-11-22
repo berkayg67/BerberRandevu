@@ -30,7 +30,7 @@ async function ShopPlate() {
 export default function PanelLayout({ children }: LayoutProps<"/panel">) {
   return (
     <div className={styles.shell}>
-      <header className={styles.head}>
+      <header className={`${styles.head} material`}>
         <Suspense fallback={<span />}>
           <ShopPlate />
         </Suspense>

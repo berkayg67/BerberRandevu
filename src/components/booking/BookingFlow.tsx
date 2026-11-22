@@ -256,7 +256,7 @@ export function BookingFlow({ shop }: { shop: PublicShop }) {
         </div>
       </section>
 
-      <div className={styles.bar}>
+      <div className={`${styles.bar} material`}>
         <div className={styles.barIn}>
           <div className={styles.sum}>
             {service ? (
@@ -329,6 +329,8 @@ export function BookingFlow({ shop }: { shop: PublicShop }) {
                 id="b-name"
                 className="input"
                 autoComplete="name"
+                autoCapitalize="words"
+                enterKeyHint="next"
                 value={customer.name}
                 onChange={(e) => setCustomer((c) => ({ ...c, name: e.target.value }))}
               />
@@ -343,6 +345,7 @@ export function BookingFlow({ shop }: { shop: PublicShop }) {
                 type="tel"
                 inputMode="tel"
                 autoComplete="tel"
+                enterKeyHint="done"
                 placeholder="05XX XXX XX XX"
                 value={customer.phone}
                 onChange={(e) => setCustomer((c) => ({ ...c, phone: e.target.value }))}

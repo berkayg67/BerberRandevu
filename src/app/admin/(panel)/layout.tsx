@@ -7,7 +7,7 @@ import { Plate } from "@/components/ui/Plate";
 export default function AdminLayout({ children }: LayoutProps<"/admin">) {
   return (
     <div className={styles.shell}>
-      <header className={styles.head}>
+      <header className={`${styles.head} material`}>
         <Link href="/admin" className={styles.homeLink} aria-label="Yönetim ana sayfası">
           <Plate district="Yönetim" name="BerberRandevu" size="sm" />
         </Link>

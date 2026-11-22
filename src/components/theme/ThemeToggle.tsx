@@ -1,17 +1,33 @@
 "use client";
 
 import { useEffect } from "react";
-import { THEME_STORAGE_KEY, type Theme } from "./theme";
+import { THEME_COLORS, THEME_STORAGE_KEY, type Theme } from "./theme";
 import styles from "./ThemeToggle.module.css";
 
-function applyTheme(theme: Theme) {
+function setTheme(theme: Theme) {
   const root = document.documentElement;
-  // Renk geçişlerini bir kare boyunca kapat: tema bir anda değişsin.
+  // Tek tek renk geçişleri kapalı: tüm ekran tek parça değişir.
   root.classList.add("theme-switching");
   root.dataset.theme = theme;
-  requestAnimationFrame(() =>
-    requestAnimationFrame(() => root.classList.remove("theme-switching")),
-  );
+  // Durum çubuğu da seçilen temaya boyansın.
+  document
+    .querySelectorAll('meta[name="theme-color"]')
+    .forEach((m) => m.setAttribute("content", THEME_COLORS[theme]));
+  requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove("theme-switching")));
+}
+
+/**
+ * Aydınlık ile karanlık arasında ani parlaklık sıçraması göz yorar (Apple):
+ * destekleyen tarayıcılarda ekran kısa bir karşıdan geçişle değişir.
+ * "Hareketi azalt" açıksa geçiş yapılmaz.
+ */
+function applyTheme(theme: Theme) {
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (!reduce && typeof document.startViewTransition === "function") {
+    document.startViewTransition(() => setTheme(theme));
+  } else {
+    setTheme(theme);
+  }
 }
 
 function savedTheme(): Theme | null {

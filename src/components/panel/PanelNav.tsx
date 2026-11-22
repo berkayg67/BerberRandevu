@@ -24,7 +24,7 @@ export function PanelNavFallback() {
 
 function NavLinks({ path }: { path: string }) {
   return (
-    <nav className={styles.nav} aria-label="Panel">
+    <nav className={`${styles.nav} material`} aria-label="Panel">
       <div className={styles.navIn}>
         {ITEMS.map((i) => (
           <Link

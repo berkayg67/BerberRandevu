@@ -9,9 +9,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 14px 20px;
-  border-bottom: 1px solid var(--line);
-  background: var(--paper);
+  padding: calc(12px + env(safe-area-inset-top, 0px)) 20px 12px;
+  box-shadow: 0 1px 0 var(--line);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -31,8 +30,10 @@
   border-radius: 10px;
   color: var(--muted);
 }
-.logout:hover {
-  color: var(--ink);
+@media (hover: hover) and (pointer: fine) {
+  .logout:hover {
+    color: var(--ink);
+  }
 }
 .main {
   padding: 24px 20px 0;
@@ -185,8 +186,8 @@
   font-size: 15px;
 }
 .smallInput {
-  height: 40px;
-  font-size: 15px;
+  height: 44px;
+  font-size: 16px;
 }
 .linkButton {
   color: var(--accent-text);

@@ -88,6 +88,7 @@ export function MyAppointments({ shop }: { shop: PublicShop }) {
           type="tel"
           inputMode="tel"
           autoComplete="tel"
+          enterKeyHint="search"
           placeholder="05XX XXX XX XX"
           aria-label="Cep telefonu"
           value={phone}

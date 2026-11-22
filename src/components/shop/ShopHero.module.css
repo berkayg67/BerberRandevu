@@ -1,17 +1,19 @@
+/* Berber fayansı: kare karolar ve ince derz. Duvar sessiz, tabela konuşur. */
 .hero {
-  padding: 16px 20px 22px;
+  --tile-size: 32px;
+  padding: calc(16px + env(safe-area-inset-top, 0px)) 20px 24px;
   background-color: var(--tile);
   background-image:
     linear-gradient(var(--grout) 1px, transparent 1px),
     linear-gradient(90deg, var(--grout) 1px, transparent 1px);
-  background-size: 30px 30px;
+  background-size: var(--tile-size) var(--tile-size);
   background-position: -1px -1px;
   border-bottom: 1px solid var(--line);
 }
 .top {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 .title {
   font: inherit;
@@ -19,9 +21,54 @@
 .facts {
   margin-top: 16px;
   display: grid;
-  gap: 3px;
+  gap: 4px;
   font-size: 15px;
 }
 .address {
   color: var(--muted);
+  max-width: 36ch;
+}
+.hours {
+  display: none;
+}
+
+@media (min-width: 960px) {
+  .hero {
+    --tile-size: 40px;
+    display: flex;
+    flex-direction: column;
+    padding: 24px 28px 28px;
+  }
+  .top {
+    margin-bottom: 48px;
+  }
+  .facts {
+    margin-top: 24px;
+  }
+  .hours {
+    display: grid;
+    margin-top: auto;
+    padding: 16px;
+    border-radius: 14px;
+    background: var(--paper);
+    box-shadow: 0 0 0 1px var(--line);
+    font-size: 14px;
+  }
+  .hours div {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+  }
+  .hours dt {
+    color: var(--muted);
+  }
+  .hours dd {
+    font-size: 16px;
+    font-weight: 500;
+  }
+  .lunch {
+    margin-top: 4px;
+    padding-top: 8px !important;
+    border-top: 1px solid var(--line);
+  }
 }

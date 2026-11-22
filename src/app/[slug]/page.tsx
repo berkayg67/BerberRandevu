@@ -53,8 +53,12 @@ async function Shop({ params }: { params: Promise<{ slug: string }> }) {
         name={shop.name}
         address={shop.address}
         status={<OpenStatus hours={shop.hours} lunch={shop.lunch} timeZone={shop.timezone} />}
+        hours={shop.hours}
+        lunch={shop.lunch}
       />
-      <CustomerApp shop={shop} />
+      <div className={styles.column}>
+        <CustomerApp shop={shop} />
+      </div>
     </>
   );
 }
