@@ -9,6 +9,7 @@ import { authenticate } from "@/server/auth/service";
 import { getDb } from "@/server/db/client";
 import { blockCustomer, unblock } from "@/server/panel/customers";
 import { setNoShow } from "@/server/panel/service";
+import { saveContact, saveHours, saveRules, saveService, saveStaff } from "@/server/panel/settings";
 
 export type PanelFormState = {
   error?: string;
@@ -142,4 +143,94 @@ export async function unblockAction(blockId: string) {
   const { shopId } = await requireOwner();
   await unblock(getDb(), shopId, blockId);
   refresh();
+}
+
+/* ---------------- Ayarlar ---------------- */
+
+const num = (fd: FormData, key: string) => Number(text(fd, key));
+
+function parseLira(value: string): number | null {
+  const cleaned = value.replace(/\s|₺/g, "").replace(/\.(?=\d{3}(\D|$))/g, "").replace(",", ".");
+  if (!/^\d+(\.\d{1,2})?$/.test(cleaned)) return null;
+  return Math.round(Number(cleaned) * 100);
+}
+
+async function settle(fn: () => Promise<string | void>): Promise<PanelFormState> {
+  try {
+    const ok = (await fn()) || "Kaydedildi.";
+    refresh();
+    return { ok };
+  } catch (error) {
+    return { error: messageOf(error) };
+  }
+}
+
+export async function saveHoursAction(_prev: PanelFormState, fd: FormData): Promise<PanelFormState> {
+  const { shopId } = await requireOwner();
+  return settle(() =>
+    saveHours(getDb(), shopId, {
+      week: [0, 1, 2, 3, 4, 5, 6].map((d) => ({
+        weekday: d,
+        hours: fd.get(`open-${d}`) === "on" ? { opens: text(fd, `opens-${d}`), closes: text(fd, `closes-${d}`) } : null,
+      })),
+      lunch: fd.get("lunch") === "on" ? { start: text(fd, "lunchStart"), end: text(fd, "lunchEnd") } : null,
+    }),
+  );
+}
+
+export async function saveRulesAction(_prev: PanelFormState, fd: FormData): Promise<PanelFormState> {
+  const { shopId } = await requireOwner();
+  return settle(() =>
+    saveRules(getDb(), shopId, {
+      slotMinutes: num(fd, "slotMinutes"),
+      bufferMinutes: num(fd, "bufferMinutes"),
+      minNoticeMinutes: num(fd, "minNoticeMinutes"),
+      bookAheadDays: num(fd, "bookAheadDays"),
+      reminderMinutesBefore: num(fd, "reminderMinutesBefore"),
+      thanksMinutesAfter: num(fd, "thanksMinutesAfter"),
+    }),
+  );
+}
+
+export async function saveContactAction(_prev: PanelFormState, fd: FormData): Promise<PanelFormState> {
+  const { shopId } = await requireOwner();
+  return settle(() =>
+    saveContact(getDb(), shopId, {
+      phone: text(fd, "phone"),
+      address: text(fd, "address"),
+      notifyPhone: text(fd, "notifyPhone"),
+      reviewUrl: text(fd, "reviewUrl"),
+    }),
+  );
+}
+
+export async function saveServiceAction(id: string | null, _prev: PanelFormState, fd: FormData): Promise<PanelFormState> {
+  const { shopId } = await requireOwner();
+  return settle(async () => {
+    const price = parseLira(text(fd, "price"));
+    if (price === null) throw new BookingError("INVALID_INPUT", "Fiyat geçersiz. Örnek: 500");
+    await saveService(getDb(), shopId, {
+      id: id ?? undefined,
+      name: text(fd, "name"),
+      durationMinutes: num(fd, "duration"),
+      priceKurus: price,
+      active: id ? fd.get("active") === "on" : true,
+    });
+    return id ? "Kaydedildi." : "Hizmet eklendi.";
+  });
+}
+
+export async function saveStaffAction(id: string | null, _prev: PanelFormState, fd: FormData): Promise<PanelFormState> {
+  const { shopId } = await requireOwner();
+  return settle(async () => {
+    const { upcoming } = await saveStaff(getDb(), shopId, {
+      id: id ?? undefined,
+      name: text(fd, "name"),
+      active: id ? fd.get("active") === "on" : true,
+    });
+    if (!id) return "Usta eklendi.";
+    return upcoming
+      ? `Kaydedildi. Bu ustanın ${upcoming} yaklaşan randevusu duruyor; gerekirse takvimden iptal edin.`
+      : "Kaydedildi.";
+  });
 }

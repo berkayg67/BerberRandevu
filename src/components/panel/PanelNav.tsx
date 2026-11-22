@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarIcon, PeopleIcon } from "./icons";
+import { CalendarIcon, ChatIcon, GearIcon, PeopleIcon } from "./icons";
 import styles from "./panel.module.css";
 
 const ITEMS = [
   { href: "/panel", label: "Takvim", icon: <CalendarIcon /> },
   { href: "/panel/musteriler", label: "Müşteriler", icon: <PeopleIcon /> },
+  { href: "/panel/mesajlar", label: "Mesajlar", icon: <ChatIcon /> },
+  { href: "/panel/ayarlar", label: "Ayarlar", icon: <GearIcon /> },
 ];
 
 /** Aktif sekmeyi adres satırından bulan menü. */
