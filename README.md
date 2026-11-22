@@ -25,17 +25,48 @@ Ardından tarayıcıda http://localhost:3000 adresini açın.
 | `npm run start` | Derlenmiş uygulamayı çalıştırır |
 | `npm run lint` | ESLint ile kod kontrolü |
 | `npm run typecheck` | TypeScript tip kontrolü |
-| `npm run check` | Lint ve tip kontrolünü birlikte çalıştırır |
+| `npm test` | Testleri çalıştırır (bellek içi PostgreSQL ile, internet gerekmez) |
+| `npm run check` | Lint, tip kontrolü ve testleri birlikte çalıştırır |
+| `npm run db:generate` | Şema değişikliğinden yeni göç (migration) dosyası üretir |
+| `npm run db:migrate` | Göçleri `.env.local` içindeki veritabanına uygular |
+| `npm run db:studio` | Veritabanını tarayıcıda gösteren aracı açar |
+
+## Klasör yapısı
+
+```
+src/
+  app/                 Sayfalar (Next.js)
+  components/          Arayüz bileşenleri
+  lib/domain/          Saf iş kuralları: telefon, saat dilimi, boş saat hesabı, mesaj şablonları
+  server/
+    booking/           Randevu alma, iptal, "Randevularım" servisleri
+    db/                Şema, veritabanı bağlantısı ve göçler (migrations)
+tests/
+  unit/                İş kuralı testleri
+  integration/         Gerçek PostgreSQL (PGlite) üzerinde servis testleri
+```
+
+## Veritabanı
+
+PostgreSQL kullanılır (Supabase). Önemli kurallar veritabanının kendisinde de korunur:
+
+- **Çift randevu olamaz.** Aynı ustanın aktif randevuları üst üste binemez (`appointments_no_overlap`). İki istek aynı anda gelse bile ikincisi reddedilir.
+- **Satır düzeyi güvenlik (RLS) her tabloda açık.** Supabase'in herkese açık API'si tablolara erişemez; erişim yalnızca sunucudaki koddan yapılır.
+- Saatler UTC, para kuruş, telefonlar `5XXXXXXXXX` biçiminde saklanır.
+
+Bağlantı bilgileri `.env.local` dosyasındadır (Git'e gitmez). Örnek: `.env.example`.
 
 ## Sürekli entegrasyon
 
-`.github/workflows/ci.yml` her `main` push'unda ve her pull request'te lint, tip kontrolü ve derlemeyi çalıştırır.
+`.github/workflows/ci.yml` her `main` push'unda ve her pull request'te lint, tip kontrolü, testler ve derlemeyi çalıştırır.
 
 ## Yol haritası
 
-1. Proje iskeleti ve CI
-2. Tasarım sistemi, aydınlık / karanlık mod
-3. Veri katmanı: randevu, müşteri, mesaj kuyruğu, çakışma ve engelleme kuralları
+1. Proje iskeleti ve CI ✅
+2. Tasarım sistemi, aydınlık / karanlık mod ✅
+3. Backend
+   - 3a. Şema, çakışma ve engelleme kuralları, mesaj kuyruğu, testler ✅
+   - 3b. Supabase bağlantısı, örnek dükkân verisi, API
 4. Müşteri sayfası: randevu alma ve "Randevularım"
-5. Berber paneli: takvim, mesajlar, müşteriler, ayarlar
-6. Gerçek veritabanı (Supabase / PostgreSQL) ve WhatsApp Business API
+5. Berber paneli ve girişi: takvim, mesajlar, müşteriler, ayarlar
+6. WhatsApp Business API ve mesaj gönderen zamanlayıcı

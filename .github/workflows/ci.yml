@@ -31,5 +31,8 @@ jobs:
       - name: Tip kontrolü
         run: npm run typecheck
 
+      - name: Testler
+        run: npm test
+
       - name: Derleme
         run: npm run build
