@@ -49,7 +49,7 @@ async function main() {
   }
 
   console.log(`→ Bağlanılıyor: ${host}`);
-  const sql = postgres(url, { max: 1, connect_timeout: 15, onnotice: () => {} });
+  const sql = postgres(url, { max: 1, connect_timeout: 15, fetch_types: false, onnotice: () => {} });
 
   try {
     await sql`select 1`;

@@ -20,7 +20,7 @@ async function main() {
     process.exit(1);
   }
 
-  const sql = postgres(url, { max: 1, connect_timeout: 15, onnotice: () => {} });
+  const sql = postgres(url, { max: 1, connect_timeout: 15, fetch_types: false, onnotice: () => {} });
   try {
     const db = drizzle(sql, { schema }) as unknown as Db;
     const result = await seedDemoShop(db);
@@ -31,7 +31,8 @@ async function main() {
     );
     console.log("\nKontrol için: npm run dev, sonra tarayıcıda http://localhost:3000/api/shops/berber-demo\n");
   } catch (error) {
-    const message = (error as { message?: string }).message ?? String(error);
+    const e = error as { message?: string; cause?: { message?: string } };
+    const message = e.cause?.message ?? e.message ?? String(error);
     console.error(
       /relation .* does not exist/i.test(message)
         ? "\n✗ Tablolar bulunamadı. Önce npm run db:migrate çalıştırın.\n"

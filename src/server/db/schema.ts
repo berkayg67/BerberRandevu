@@ -16,6 +16,7 @@ import { sql } from "drizzle-orm";
 import {
   boolean,
   check,
+  date,
   index,
   integer,
   pgEnum,
@@ -44,6 +45,8 @@ export const messageKind = pgEnum("message_kind", [
   "thanks",
 ]);
 export const messageRecipient = pgEnum("message_recipient", ["customer", "shop"]);
+export const userRole = pgEnum("user_role", ["admin", "owner"]);
+export const paymentMethod = pgEnum("payment_method", ["nakit", "havale", "kart", "diger"]);
 export const messageStatus = pgEnum("message_status", [
   "scheduled",
   "sent",
@@ -72,9 +75,20 @@ export const shops = pgTable(
     thanksMinutesAfter: smallint("thanks_minutes_after").notNull().default(30),
     breakStart: time("break_start"),
     breakEnd: time("break_end"),
+    /** Kapalı dükkân online randevu almaz ve müşteri sayfası açılmaz. */
+    active: boolean("active").notNull().default(true),
+    /** Aylık abonelik ücreti (kuruş). */
+    monthlyFeeKurus: integer("monthly_fee_kurus").notNull().default(0),
+    /** Abonelik bu tarihten itibaren ücretlendirilir. */
+    billingStart: date("billing_start").notNull().defaultNow(),
+    ownerName: text("owner_name"),
+    ownerPhone: text("owner_phone"),
+    /** Yalnızca yöneticinin gördüğü notlar. */
+    adminNotes: text("admin_notes"),
     createdAt: createdAt(),
   },
   (t) => [
+    check("shops_fee", sql`${t.monthlyFeeKurus} >= 0`),
     check("shops_slug_format", sql`${t.slug} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
     check(
       "shops_break_valid",
@@ -244,5 +258,66 @@ export const messages = pgTable(
   (t) => [
     index("messages_due_idx").on(t.status, t.sendAt),
     index("messages_appointment_idx").on(t.appointmentId),
+  ],
+).enableRLS();
+
+/**
+ * Panel kullanıcıları. "admin" tüm dükkânları yönetir; "owner" (5. adım)
+ * yalnızca kendi dükkânını.
+ */
+export const users = pgTable(
+  "users",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    email: text("email").notNull().unique(),
+    name: text("name").notNull(),
+    passwordHash: text("password_hash").notNull(),
+    role: userRole("role").notNull(),
+    shopId: uuid("shop_id").references(() => shops.id, { onDelete: "cascade" }),
+    active: boolean("active").notNull().default(true),
+    lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    check("users_email_lower", sql`${t.email} = lower(${t.email})`),
+    check("users_owner_has_shop", sql`(${t.role} = 'owner') = (${t.shopId} is not null)`),
+  ],
+).enableRLS();
+
+/** Oturumlar. Çerezdeki anahtarın kendisi değil, SHA-256 özeti saklanır. */
+export const sessions = pgTable(
+  "sessions",
+  {
+    id: text("id").primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index("sessions_user_idx").on(t.userId)],
+).enableRLS();
+
+/** Abonelik tahsilatları. Bir dükkânın bir ayı için en fazla bir kayıt; kayıt varsa o ay ödenmiştir. */
+export const payments = pgTable(
+  "payments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    shopId: uuid("shop_id")
+      .notNull()
+      .references(() => shops.id, { onDelete: "cascade" }),
+    /** "2026-11" */
+    period: text("period").notNull(),
+    amountKurus: integer("amount_kurus").notNull(),
+    method: paymentMethod("method").notNull(),
+    paidAt: timestamp("paid_at", { withTimezone: true }).notNull().defaultNow(),
+    note: text("note"),
+    recordedBy: uuid("recorded_by").references(() => users.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    unique("payments_shop_period").on(t.shopId, t.period),
+    check("payments_period_format", sql`${t.period} ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'`),
+    check("payments_amount", sql`${t.amountKurus} >= 0`),
   ],
 ).enableRLS();

@@ -26,7 +26,8 @@ export const DEMO_SHOP = {
 
 const DEMO_STAFF = ["Murat", "Emre"];
 
-const DEMO_SERVICES = [
+/** Yeni açılan her dükkâna başlangıçta eklenen hizmetler; dükkân sonradan değiştirir. */
+export const DEFAULT_SERVICES = [
   { name: "Saç kesimi", durationMinutes: 30, priceKurus: 50_000 },
   { name: "Sakal tıraşı", durationMinutes: 20, priceKurus: 25_000 },
   { name: "Saç ve sakal", durationMinutes: 45, priceKurus: 70_000 },
@@ -36,7 +37,7 @@ const DEMO_SERVICES = [
 ];
 
 /** Pazartesi–Cumartesi 09:00–21:00, Pazar kapalı. */
-const DEMO_HOURS = [1, 2, 3, 4, 5, 6].map((weekday) => ({ weekday, opens: "09:00", closes: "21:00" }));
+export const DEFAULT_HOURS = [1, 2, 3, 4, 5, 6].map((weekday) => ({ weekday, opens: "09:00", closes: "21:00" }));
 
 /**
  * Demo dükkânı ekler. Zaten varsa dokunmaz (tekrar çalıştırmak güvenlidir).
@@ -48,11 +49,11 @@ export async function seedDemoShop(db: Db): Promise<{ created: boolean; shopId: 
 
   return db.transaction(async (tx) => {
     const [shop] = await tx.insert(shops).values(DEMO_SHOP).returning({ id: shops.id });
-    await tx.insert(workingHours).values(DEMO_HOURS.map((h) => ({ ...h, shopId: shop.id })));
+    await tx.insert(workingHours).values(DEFAULT_HOURS.map((h) => ({ ...h, shopId: shop.id })));
     await tx.insert(staff).values(DEMO_STAFF.map((name, sort) => ({ shopId: shop.id, name, sort })));
     await tx
       .insert(services)
-      .values(DEMO_SERVICES.map((s, sort) => ({ ...s, shopId: shop.id, sort })));
+      .values(DEFAULT_SERVICES.map((s, sort) => ({ ...s, shopId: shop.id, sort })));
     return { created: true, shopId: shop.id };
   });
 }

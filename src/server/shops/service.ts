@@ -6,7 +6,8 @@ import { BookingError } from "@/server/booking/errors";
 
 export async function getShopBySlug(db: Db, slug: string) {
   const [shop] = await db.select().from(shops).where(eq(shops.slug, slug));
-  if (!shop) throw new BookingError("NOT_FOUND", "Dükkân bulunamadı.");
+  // Yönetici tarafından durdurulan dükkân müşterilere hiç görünmez.
+  if (!shop || !shop.active) throw new BookingError("NOT_FOUND", "Dükkân bulunamadı.");
   return shop;
 }
 

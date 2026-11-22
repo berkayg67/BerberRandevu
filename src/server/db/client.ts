@@ -18,9 +18,10 @@ export function getDb(): Db {
     throw new Error("DATABASE_URL tanımlı değil. .env.local dosyasını kontrol edin (bkz. .env.example).");
   }
   // Supabase'in "transaction pooler" bağlantısı hazır sorguları (prepared
-  // statements) desteklemediği için kapatılır.
+  // statements) desteklemediği için kapatılır. Dizi tipleri kullanmadığımız
+  // için her yeni bağlantıda tip listesi de çekilmez (fetch_types).
   const max = Number(process.env.DATABASE_POOL_MAX ?? 5) || 5;
-  const sql = postgres(url, { prepare: false, max });
+  const sql = postgres(url, { prepare: false, fetch_types: false, max });
   const db: Db = drizzle(sql, { schema });
 
   // Geliştirme sırasında her kod değişikliğinde yeni bağlantı açılmasın.

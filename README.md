@@ -31,6 +31,7 @@ Ardından tarayıcıda http://localhost:3000 adresini açın.
 | `npm run db:migrate` | Tabloları `.env.local` içindeki veritabanına kurar / günceller |
 | `npm run db:seed` | Demo dükkânı (berber-demo) ekler; varsa dokunmaz |
 | `npm run db:studio` | Veritabanını tarayıcıda gösteren aracı açar |
+| `npm run admin:create -- e-posta "Ad Soyad"` | Yönetici hesabı açar ya da şifresini yeniler; şifreyi bir kez gösterir |
 
 ## Klasör yapısı
 
@@ -57,6 +58,23 @@ PostgreSQL kullanılır (Supabase). Önemli kurallar veritabanının kendisinde 
 
 Bağlantı bilgileri `.env.local` dosyasındadır (Git'e gitmez). Örnek: `.env.example`.
 
+## Yönetim paneli
+
+`/admin` adresi yalnızca yönetici hesabıyla açılır. Buradan:
+
+- tüm dükkânlar, aylık ücretleri ve tahsilat durumları görülür,
+- yeni dükkân eklenir (varsayılan çalışma saatleri, hizmetler ve bir usta ile),
+- dükkân bilgileri düzenlenir, dükkân durdurulur ya da yeniden açılır (durdurulan dükkân müşterilere görünmez),
+- her ay için "Tahsil edildi" işaretlenir (tutar, yöntem, not) ya da geri alınır.
+
+İlk yönetici hesabı:
+
+```bash
+npm run admin:create -- ornek@mail.com "Ad Soyad"
+```
+
+Şifreler scrypt ile özetlenir, oturum anahtarının kendisi veritabanına yazılmaz, oturum 14 gün geçerlidir.
+
 ## API
 
 | İstek | Ne yapar |
@@ -69,7 +87,7 @@ Bağlantı bilgileri `.env.local` dosyasındadır (Git'e gitmez). Örnek: `.env.
 
 Hatalar `{ "error": { "code", "message" } }` biçiminde, Türkçe açıklamayla döner.
 
-> Not: "Randevularım" ve iptal şimdilik yalnızca telefon numarasıyla çalışır. Canlıya çıkmadan önce WhatsApp doğrulama kodu ve istek sınırlama eklenecek (6. adım).
+> Not: "Randevularım" ve iptal şimdilik yalnızca telefon numarasıyla çalışır. Canlıya çıkmadan önce WhatsApp doğrulama kodu ve istek sınırlama eklenecek (7. adım).
 
 ## Sürekli entegrasyon
 
@@ -82,6 +100,7 @@ Hatalar `{ "error": { "code", "message" } }` biçiminde, Türkçe açıklamayla 
 3. Backend
    - 3a. Şema, çakışma ve engelleme kuralları, mesaj kuyruğu, testler ✅
    - 3b. Supabase bağlantısı, örnek dükkân verisi, API ✅
-4. Müşteri sayfası: randevu alma ve "Randevularım"
-5. Berber paneli ve girişi: takvim, mesajlar, müşteriler, ayarlar
-6. WhatsApp Business API ve mesaj gönderen zamanlayıcı
+4. Yönetim paneli: dükkânlar ve tahsilat ✅
+5. Müşteri sayfası: randevu alma ve "Randevularım"
+6. Berber paneli ve girişi: takvim, mesajlar, müşteriler, ayarlar
+7. WhatsApp Business API ve mesaj gönderen zamanlayıcı

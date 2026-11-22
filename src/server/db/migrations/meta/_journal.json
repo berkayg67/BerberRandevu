@@ -15,6 +15,13 @@
       "when": 1795329085233,
       "tag": "0001_randevu_cakisma_kurali",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795333316269,
+      "tag": "0002_yonetim_paneli",
+      "breakpoints": true
     }
   ]
 }
