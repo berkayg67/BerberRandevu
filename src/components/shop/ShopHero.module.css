@@ -25,8 +25,56 @@
 }
 .top {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.logins {
+  display: flex;
+  gap: 4px;
+}
+.login {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+  background: var(--paper);
+  box-shadow: 0 0 0 1px var(--line);
+  touch-action: manipulation;
+  transition: transform 160ms var(--ease-out);
+}
+.login:active {
+  transform: scale(0.97);
+}
+@media (hover: hover) and (pointer: fine) {
+  .login:hover {
+    box-shadow: 0 0 0 1px var(--ink);
+  }
+}
+.faces {
+  display: flex;
+  align-items: center;
+  gap: 16px;
   margin-bottom: 16px;
+}
+.stack {
+  display: inline-flex;
+}
+.stack > * + * {
+  margin-left: -10px;
+}
+.kicker {
+  margin-top: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
 }
 .title {
   font: inherit;
@@ -41,50 +89,6 @@
   color: var(--muted);
   max-width: 36ch;
 }
-.hours {
-  display: none;
-}
-.description {
-  margin-top: 12px;
-  max-width: 52ch;
-  font-size: 15px;
-  line-height: 1.5;
-  white-space: pre-line;
-}
-/* Fotoğraflar: yatay kaydırılan şerit, her kare kenara oturur. */
-.gallery {
-  list-style: none;
-  display: flex;
-  gap: 8px;
-  margin: 16px -20px 0;
-  padding: 0 20px 4px;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  scroll-padding-inline: 20px;
-  overscroll-behavior-x: contain;
-  scrollbar-width: none;
-}
-.gallery::-webkit-scrollbar {
-  display: none;
-}
-.gallery li {
-  flex: 0 0 auto;
-  width: min(78vw, 320px);
-  scroll-snap-align: start;
-}
-.gallery li:only-child {
-  width: 100%;
-}
-.gallery img {
-  display: block;
-  width: 100%;
-  height: auto;
-  aspect-ratio: 4 / 3;
-  object-fit: cover;
-  border-radius: 14px;
-  background: var(--grout);
-  box-shadow: 0 0 0 1px var(--line);
-}
 
 @media (min-width: 960px) {
   .hero {
@@ -98,43 +102,6 @@
     margin-bottom: 48px;
   }
   .facts {
-    margin-top: 24px;
-  }
-  .gallery {
-    margin: 20px -28px 0;
-    padding: 0 28px 4px;
-    scroll-padding-inline: 28px;
-  }
-  .gallery li {
-    width: 82%;
-  }
-  .gallery {
-    margin-bottom: 24px;
-  }
-  .hours {
-    display: grid;
-    margin-top: auto;
-    padding: 16px;
-    border-radius: 14px;
-    background: var(--paper);
-    box-shadow: 0 0 0 1px var(--line);
-    font-size: 14px;
-  }
-  .hours div {
-    display: flex;
-    justify-content: space-between;
-    padding: 4px 0;
-  }
-  .hours dt {
-    color: var(--muted);
-  }
-  .hours dd {
-    font-size: 16px;
-    font-weight: 500;
-  }
-  .lunch {
-    margin-top: 4px;
-    padding-top: 8px !important;
-    border-top: 1px solid var(--line);
+    margin-top: 16px;
   }
 }

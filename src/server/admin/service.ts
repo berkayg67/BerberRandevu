@@ -1,10 +1,10 @@
 import { and, count, desc, eq, gte, inArray, isNotNull } from "drizzle-orm";
 import { normalizePhone } from "@/lib/domain/phone";
 import { periodOf, periodsBetween, type Period } from "@/lib/domain/period";
-import { slugify } from "@/lib/domain/slug";
+import { RESERVED_SLUGS, slugify } from "@/lib/domain/slug";
 import { todayIn } from "@/lib/domain/time";
 import { DEFAULT_HOURS, DEFAULT_SERVICES } from "@/server/db/demo-shop";
-import { appointments, payments, services, shops, staff, workingHours } from "@/server/db/schema";
+import { appointments, payments, services, shopSlugRedirects, shops, staff, workingHours } from "@/server/db/schema";
 import type { Db } from "@/server/db/types";
 
 const TZ = "Europe/Istanbul";
@@ -133,15 +133,13 @@ function checkPhones(input: Pick<ShopInput, "notifyPhone" | "ownerPhone">) {
   return { notify, owner };
 }
 
-/** Sistem sayfalarıyla çakışan adresler dükkân adresi olamaz. */
-export const RESERVED_SLUGS = new Set(["admin", "panel", "api", "yasal", "giris", "kayit", "www", "tasarim", "_next"]);
-
 async function uniqueSlug(db: Db, name: string) {
   let base = slugify(name) || "berber";
   if (RESERVED_SLUGS.has(base)) base = `${base}-berber`;
-  const taken = new Set(
-    (await db.select({ slug: shops.slug }).from(shops)).map((r) => r.slug),
-  );
+  const taken = new Set([
+    ...(await db.select({ slug: shops.slug }).from(shops)).map((r) => r.slug),
+    ...(await db.select({ slug: shopSlugRedirects.oldSlug }).from(shopSlugRedirects)).map((r) => r.slug),
+  ]);
   if (!taken.has(base)) return base;
   for (let i = 2; ; i++) if (!taken.has(`${base}-${i}`)) return `${base}-${i}`;
 }

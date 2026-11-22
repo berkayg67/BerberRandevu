@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { login } from "@/app/admin/actions";
 import { LoginForm } from "@/components/admin/LoginForm";
 import { AuthShell } from "@/components/auth/AuthShell";
+import { RenewedNotice } from "@/components/auth/RenewedNotice";
 import { getCurrentUser } from "@/server/auth/current";
 
 export const metadata: Metadata = { title: "Yönetici girişi", robots: { index: false } };
@@ -19,8 +20,9 @@ export default function LoginPage() {
     <AuthShell title="Yönetici girişi" intro={<p>Bu sayfa yalnızca Tıraş Vakti yöneticisi içindir.</p>}>
       <Suspense>
         <AlreadySignedIn />
+        <RenewedNotice />
       </Suspense>
-      <LoginForm login={login} />
+      <LoginForm login={login} forgotHref="/admin/sifremi-unuttum" />
     </AuthShell>
   );
 }

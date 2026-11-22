@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { cancelByShopAction, setNoShowAction } from "@/app/panel/actions";
+import Link from "next/link";
+import { cancelByShopAction, saveAppointmentNoteAction, setNoShowAction } from "@/app/panel/actions";
 import { Sheet } from "@/components/ui/Sheet";
 import { formatPrice } from "@/lib/domain/money";
 import { formatPhone, toWhatsAppNumber } from "@/lib/domain/phone";
-import type { DayAppointment } from "@/server/panel/service";
+import type { DayAppointment, PanelShop } from "@/server/panel/service";
+import { RescheduleForm } from "./RescheduleForm";
 import styles from "./panel.module.css";
 
 function statusTag(a: DayAppointment) {
@@ -18,8 +20,11 @@ function statusTag(a: DayAppointment) {
 }
 
 /** Günün randevuları, saat sırasıyla. Dokununca ayrıntı ve işlemler açılır. */
-export function DayList({ appointments }: { appointments: DayAppointment[] }) {
+export function DayList({ appointments, shop, date }: { appointments: DayAppointment[]; shop: PanelShop; date: string }) {
   const [openId, setOpenId] = useState<string | null>(null);
+  const [moving, setMoving] = useState(false);
+  const [note, setNote] = useState("");
+  const [noteSaved, setNoteSaved] = useState(false);
   const [armed, setArmed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
@@ -27,6 +32,9 @@ export function DayList({ appointments }: { appointments: DayAppointment[] }) {
 
   function show(id: string) {
     setOpenId(id);
+    setMoving(false);
+    setNote(appointments.find((a) => a.id === id)?.note ?? "");
+    setNoteSaved(false);
     setArmed(false);
     setError(null);
   }
@@ -73,7 +81,19 @@ export function DayList({ appointments }: { appointments: DayAppointment[] }) {
       </div>
 
       <Sheet open={!!open} onClose={() => setOpenId(null)} label="Randevu ayrıntısı">
-        {open && (
+        {open && moving && (
+          <RescheduleForm
+            appointment={open}
+            shop={shop}
+            currentDate={date}
+            onBack={() => setMoving(false)}
+            onDone={() => {
+              setMoving(false);
+              setOpenId(null);
+            }}
+          />
+        )}
+        {open && !moving && (
           <>
             <h2 className={styles.sheetTitle}>{open.customerName}</h2>
             <p className={styles.sheetSub}>{formatPhone(open.customerPhone)}</p>
@@ -121,6 +141,12 @@ export function DayList({ appointments }: { appointments: DayAppointment[] }) {
                 </a>
               </div>
 
+              {open.status === "active" && !open.past && (
+                <button type="button" className="btn btn-quiet btn-block" onClick={() => setMoving(true)}>
+                  Randevuyu ertele
+                </button>
+              )}
+
               {open.status === "active" && !open.started && (
                 <button
                   type="button"
@@ -143,6 +169,41 @@ export function DayList({ appointments }: { appointments: DayAppointment[] }) {
                 </button>
               )}
             </div>
+            <div className="field" style={{ marginTop: 16 }}>
+              <label htmlFor="ap-note">
+                Not <span className="hint">yalnızca siz görürsünüz</span>
+              </label>
+              <textarea
+                id="ap-note"
+                className="input"
+                rows={2}
+                maxLength={300}
+                value={note}
+                placeholder="Örn. sakal şekli, özel istek"
+                onChange={(e) => {
+                  setNote(e.target.value);
+                  setNoteSaved(false);
+                }}
+                onBlur={() => {
+                  if (note.trim() !== (open.note ?? "")) {
+                    start(async () => {
+                      const r = await saveAppointmentNoteAction(open.id, note);
+                      if (r.error) setError(r.error);
+                      else setNoteSaved(true);
+                    });
+                  }
+                }}
+              />
+              {noteSaved && <p className={styles.okInline}>Not kaydedildi.</p>}
+            </div>
+            {open.customerNote && (
+              <p className={styles.sheetSub}>
+                Müşteri notu: {open.customerNote}
+              </p>
+            )}
+            <Link href={`/panel/musteriler/${open.customerId}`} className="btn btn-quiet btn-block" style={{ marginTop: 8 }}>
+              Müşteri kartı
+            </Link>
             {open.noShow && (
               <p className={styles.sheetSub} style={{ marginTop: 10 }}>
                 Gelmedi olarak işaretlendiği için teşekkür mesajı gönderilmeyecek.

@@ -446,3 +446,115 @@
 .legalFoot a {
   text-underline-offset: 3px;
 }
+
+/* Hemen randevu al kartı */
+.ctaCard {
+  margin: 16px 20px 0;
+  padding: 20px;
+  display: grid;
+  gap: 16px;
+  border-radius: 16px;
+  background: var(--paper);
+  box-shadow: 0 0 0 1px var(--line);
+}
+.ctaTitle {
+  font: 600 24px/1.15 var(--f-display);
+  letter-spacing: -0.01em;
+}
+.ctaSub {
+  margin-top: 4px;
+  font-size: 15px;
+  color: var(--muted);
+}
+.ctaBtn {
+  min-height: 52px;
+  font-size: 17px;
+}
+
+/* Dört adımlı randevu penceresi */
+.wiz {
+  display: flex;
+  flex-direction: column;
+  min-height: min(520px, 70dvh);
+}
+.wizHead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.back {
+  width: 40px;
+  height: 40px;
+  margin-left: -10px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+  touch-action: manipulation;
+  transition: transform 160ms var(--ease-out);
+}
+.back:active {
+  transform: scale(0.92);
+}
+.dots {
+  flex: 1;
+  display: flex;
+  gap: 6px;
+  list-style: none;
+}
+.dots li {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line);
+  transition: background-color 240ms var(--ease-out);
+}
+.dots li[data-state="done"],
+.dots li[data-state="now"] {
+  background: var(--enamel);
+}
+.dots li[data-state="done"] {
+  opacity: 0.45;
+}
+.stepNo {
+  font-size: 14px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.anyFace {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--tile);
+  color: var(--accent-text);
+  flex: 0 0 auto;
+}
+.wizFoot {
+  position: sticky;
+  bottom: calc(-24px - env(safe-area-inset-bottom, 0px));
+  margin: auto -20px calc(-24px - env(safe-area-inset-bottom, 0px));
+  padding: 12px 20px calc(24px + env(safe-area-inset-bottom, 0px));
+  background: var(--paper);
+  box-shadow: 0 -1px 0 var(--line);
+  display: grid;
+  gap: 8px;
+}
+.footSum {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.footSum b {
+  color: var(--ink);
+  font-weight: 600;
+}
+.wiz > h2 {
+  margin-bottom: 16px;
+}
+.wiz .strip {
+  margin: 0 -20px;
+}

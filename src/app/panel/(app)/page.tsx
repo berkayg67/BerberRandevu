@@ -78,7 +78,7 @@ async function Calendar({ searchParams }: { searchParams: Promise<Record<string,
         </div>
       </div>
 
-      <DayList appointments={appointments} />
+      <DayList appointments={appointments} shop={shop} date={date} />
       <AddAppointment shop={shop} defaultDate={date < shop.today ? shop.today : date} />
     </>
   );

@@ -3,14 +3,15 @@
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { BookingError } from "@/server/booking/errors";
-import { cancelAppointment, createAppointment, getDaySlots } from "@/server/booking/service";
+import { cancelAppointment, createAppointment, getDaySlots, rescheduleAppointment } from "@/server/booking/service";
 import { endSession, requireOwner, startSession } from "@/server/auth/current";
 import { AccountError, authenticate } from "@/server/auth/service";
-import { isShopApproved, registerShop, requestPasswordReset } from "@/server/signup/service";
+import { isShopApproved, registerShop } from "@/server/signup/service";
 import { getDb } from "@/server/db/client";
-import { blockCustomer, unblock } from "@/server/panel/customers";
-import { setNoShow } from "@/server/panel/service";
-import { saveContact, saveHours, saveProfile, saveRules, saveService, saveStaff } from "@/server/panel/settings";
+import { blockCustomer, unblock, updateCustomer } from "@/server/panel/customers";
+import { addClosure, removeClosure } from "@/server/panel/closures";
+import { setAppointmentNote, setNoShow } from "@/server/panel/service";
+import { changeSlug, saveContact, saveHours, saveProfile, saveRules, saveService, saveStaff } from "@/server/panel/settings";
 import { deletePhoto, makeCover } from "@/server/panel/photos";
 
 export type PanelFormState = {
@@ -76,18 +77,6 @@ export async function signupAction(_prev: SignupState, fd: FormData): Promise<Si
   }
 }
 
-export async function forgotPasswordAction(_prev: SignupState, fd: FormData): Promise<SignupState> {
-  const email = text(fd, "email");
-  try {
-    await requestPasswordReset(getDb(), email);
-    return { done: true, values: { email } };
-  } catch (error) {
-    if (error instanceof AccountError) return { error: error.message, values: { email } };
-    console.error("[şifre] beklenmeyen hata", error);
-    return { error: "Talep alınamadı. Biraz sonra tekrar deneyin.", values: { email } };
-  }
-}
-
 export async function logoutOwner() {
   await endSession();
   redirect("/panel/giris");
@@ -96,10 +85,16 @@ export async function logoutOwner() {
 /* ---------------- Takvim ---------------- */
 
 /** Randevu ekleme penceresi için o günün boş saatleri. */
-export async function panelSlotsAction(input: { serviceId: string; staffId: string; date: string }) {
+export async function panelSlotsAction(input: { serviceId: string; staffId: string; date: string; excludeAppointmentId?: string }) {
   const { shopId } = await requireOwner();
   try {
-    const slots = await getDaySlots(getDb(), { shopId, serviceId: input.serviceId, date: input.date, source: "panel" });
+    const slots = await getDaySlots(getDb(), {
+      shopId,
+      serviceId: input.serviceId,
+      date: input.date,
+      source: "panel",
+      excludeAppointmentId: input.excludeAppointmentId,
+    });
     const times = slots
       .filter((s) => (input.staffId === "any" ? s.freeStaffIds.length > 0 : s.freeStaffIds.includes(input.staffId)))
       .map((s) => s.time);
@@ -307,4 +302,80 @@ export async function saveStaffAction(id: string | null, _prev: PanelFormState, 
       ? `Kaydedildi. Bu ustanın ${upcoming} yaklaşan randevusu duruyor; gerekirse takvimden iptal edin.`
       : "Kaydedildi.";
   });
+}
+
+/* ---------------- Randevu ayrıntısı: erteleme, not ---------------- */
+
+export async function rescheduleAction(input: {
+  appointmentId: string;
+  date: string;
+  time: string;
+  staffId?: string;
+  serviceId?: string;
+}): Promise<{ error?: string }> {
+  const { shopId } = await requireOwner();
+  try {
+    await rescheduleAppointment(getDb(), { shopId, ...input });
+  } catch (error) {
+    return { error: messageOf(error) };
+  }
+  refresh();
+  return {};
+}
+
+export async function saveAppointmentNoteAction(appointmentId: string, note: string): Promise<{ error?: string }> {
+  const { shopId } = await requireOwner();
+  try {
+    await setAppointmentNote(getDb(), { shopId, appointmentId, note });
+  } catch (error) {
+    return { error: messageOf(error) };
+  }
+  refresh();
+  return {};
+}
+
+export async function updateCustomerAction(customerId: string, _prev: PanelFormState, fd: FormData): Promise<PanelFormState> {
+  const { shopId } = await requireOwner();
+  return settle(async () => {
+    await updateCustomer(getDb(), {
+      shopId,
+      customerId,
+      name: text(fd, "name"),
+      phone: text(fd, "phone"),
+      note: text(fd, "note"),
+    });
+  });
+}
+
+/* ---------------- Adres, tatil ---------------- */
+
+export async function changeSlugAction(_prev: PanelFormState, fd: FormData): Promise<PanelFormState> {
+  const { shopId } = await requireOwner();
+  return settle(async () => {
+    const r = await changeSlug(getDb(), shopId, text(fd, "slug"));
+    return r.changed ? "Adres değişti. Eski bağlantılar yeni adrese yönlenir." : "Adres aynı, değişiklik yok.";
+  });
+}
+
+export async function addClosureAction(_prev: PanelFormState, fd: FormData): Promise<PanelFormState> {
+  const { shopId } = await requireOwner();
+  return settle(async () => {
+    const from = text(fd, "from");
+    const r = await addClosure(getDb(), {
+      shopId,
+      from,
+      to: text(fd, "to") || from,
+      note: text(fd, "note"),
+      cancelExisting: fd.get("cancel") === "on",
+    });
+    if (r.cancelled) return `Kapatıldı. ${r.cancelled} randevu iptal edildi ve müşterilere haber verildi.`;
+    if (r.affected) return `Kapatıldı. Bu günlerde ${r.affected} randevunuz var; online randevu kapandı, mevcutlar duruyor.`;
+    return "Bu günler online randevuya kapatıldı.";
+  });
+}
+
+export async function removeClosureAction(id: string) {
+  const { shopId } = await requireOwner();
+  await removeClosure(getDb(), shopId, id);
+  refresh();
 }

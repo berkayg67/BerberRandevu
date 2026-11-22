@@ -66,9 +66,14 @@ export async function listDayAppointments(
       cancelledBy: appointments.cancelledBy,
       serviceName: appointments.serviceName,
       priceKurus: appointments.priceKurus,
+      note: appointments.note,
+      serviceId: appointments.serviceId,
+      staffId: appointments.staffId,
       staffName: staff.name,
+      customerId: customers.id,
       customerName: customers.name,
       customerPhone: customers.phone,
+      customerNote: customers.note,
     })
     .from(appointments)
     .innerJoin(staff, eq(staff.id, appointments.staffId))
@@ -133,4 +138,18 @@ export async function setNoShow(
         .where(and(thanks, eq(messages.status, "cancelled"), gte(messages.sendAt, now)));
     }
   });
+}
+
+const MAX_NOTE = 300;
+
+/** Randevuya berberin kendi notunu yazar (müşteri görmez). Boş not siler. */
+export async function setAppointmentNote(db: Db, input: { shopId: string; appointmentId: string; note: string }) {
+  const note = input.note.trim();
+  if (note.length > MAX_NOTE) throw new BookingError("INVALID_INPUT", `Not en fazla ${MAX_NOTE} karakter olabilir.`);
+  const [row] = await db
+    .update(appointments)
+    .set({ note: note || null })
+    .where(and(eq(appointments.id, input.appointmentId), eq(appointments.shopId, input.shopId)))
+    .returning({ id: appointments.id });
+  if (!row) throw new BookingError("NOT_FOUND", "Randevu bulunamadı.");
 }

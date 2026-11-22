@@ -8,6 +8,7 @@ export function LegalLinks({ className }: { className?: string }) {
       <Link href="/yasal/musteri-aydinlatma">Aydınlatma metni</Link>
       <Link href="/yasal/kullanim-kosullari">Kullanım koşulları</Link>
       <Link href="/yasal/cerez">Çerezler</Link>
+      <Link href="/icerik-bildir">İçeriği bildir</Link>
     </nav>
   );
 }

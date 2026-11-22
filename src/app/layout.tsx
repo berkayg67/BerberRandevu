@@ -8,6 +8,7 @@ import { themeBootScript } from "@/components/theme/theme";
 
 export const metadata: Metadata = {
   title: { default: "Tıraş Vakti", template: "%s | Tıraş Vakti" },
+  appleWebApp: { capable: true, title: "Tıraş Vakti", statusBarStyle: "default" },
   description: "Berberler için online randevu sistemi. Müşteri boş saati görüp randevu alır, berber günü tek ekrandan yönetir.",
 };
 

@@ -12,6 +12,9 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
           <Logo size={24} /> <span className="tag tag-grey">Yönetim</span>
         </Link>
         <div className={styles.headRight}>
+          <Link href="/admin/hesap" className={styles.logout}>
+            Hesabım
+          </Link>
           <ThemeToggle />
           <form action={logout}>
             <button type="submit" className={styles.logout}>

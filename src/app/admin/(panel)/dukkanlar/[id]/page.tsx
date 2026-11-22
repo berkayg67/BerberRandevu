@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import styles from "@/components/admin/admin.module.css";
 import { OwnerAccounts } from "@/components/admin/OwnerAccounts";
+import { ShopPhotos } from "@/components/admin/ShopPhotos";
+import { listAllShopPhotos } from "@/server/admin/photos";
 import { PeriodRow } from "@/components/admin/PeriodRow";
 import { ShopForm } from "@/components/admin/ShopForm";
 import { formatPrice } from "@/lib/domain/money";
@@ -41,7 +43,7 @@ async function Detail({ params }: { params: Promise<{ id: string }> }) {
   if (!data) notFound();
   const { shop } = data;
   const fee = shop.monthlyFeeKurus;
-  const owners = await listOwners(getDb(), shop.id);
+  const [owners, photos] = await Promise.all([listOwners(getDb(), shop.id), listAllShopPhotos(getDb(), shop.id)]);
 
   return (
     <>
@@ -112,6 +114,9 @@ async function Detail({ params }: { params: Promise<{ id: string }> }) {
           lastLogin: o.lastLoginAt ? formatDayTr(o.lastLoginAt, "Europe/Istanbul") : null,
         }))}
       />
+
+      <h2 className={styles.h2}>Fotoğraflar</h2>
+      <ShopPhotos shopId={shop.id} photos={photos} />
 
       <h2 className={styles.h2}>Bilgiler</h2>
       <ShopForm

@@ -29,6 +29,13 @@
       "when": 1795342165892,
       "tag": "0003_kayit_fotograf_kvkk",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1795357510443,
+      "tag": "0004_hesap_guvenligi_tatil_logo",
+      "breakpoints": true
     }
   ]
 }

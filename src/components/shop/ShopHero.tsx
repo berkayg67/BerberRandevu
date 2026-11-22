@@ -1,10 +1,9 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 import { Plate } from "@/components/ui/Plate";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { Avatar } from "./Avatar";
 import styles from "./ShopHero.module.css";
-
-const DAYS = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
-const ORDER = [1, 2, 3, 4, 5, 6, 0];
 
 type ShopHeroProps = {
   district: string;
@@ -12,67 +11,53 @@ type ShopHeroProps = {
   address: string;
   /** Adresin üstünde gösterilen durum satırı (açık / kapalı). */
   status?: ReactNode;
-  /** Haftalık saatler; geniş ekranda fayans duvarında listelenir. */
-  hours?: { weekday: number; opens: string; closes: string }[];
-  lunch?: { start: string; end: string } | null;
-  description?: string | null;
-  photos?: { id: string; width: number; height: number }[];
+  logoId?: string | null;
+  staff?: { id: string; name: string; photoId: string | null }[];
 };
 
-/** Müşteri sayfasının fayans duvarı: emaye tabela, durum, adres ve (geniş ekranda) saatler. */
-export function ShopHero({ district, name, address, status, hours, lunch, description, photos = [] }: ShopHeroProps) {
+/** Müşteri sayfasının fayans duvarı: giriş bağlantıları, logo ve usta yüzleri, emaye tabela, durum, adres. */
+export function ShopHero({ district, name, address, status, logoId, staff = [] }: ShopHeroProps) {
+  const faces = staff.slice(0, 4);
   return (
     <header className={styles.hero}>
       <div className={styles.top}>
+        <nav className={styles.logins} aria-label="Giriş">
+          <Link href="/panel/giris" className={styles.login}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="12" cy="8" r="3.5" />
+              <path d="M5 20c.8-3.6 3.5-5.5 7-5.5s6.2 1.9 7 5.5" />
+            </svg>
+            Berber girişi
+          </Link>
+          <Link href="/admin/giris" className={styles.login}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z" />
+            </svg>
+            Yönetici
+          </Link>
+        </nav>
         <ThemeToggle />
       </div>
+      {(logoId || faces.length > 0) && (
+        <div className={styles.faces} aria-hidden="true">
+          {logoId && <Avatar name={name} photoId={logoId} size={64} ring />}
+          {faces.length > 0 && (
+            <span className={styles.stack}>
+              {faces.map((s) => (
+                <Avatar key={s.id} name={s.name} photoId={s.photoId} size={40} ring />
+              ))}
+            </span>
+          )}
+        </div>
+      )}
       <h1 className={styles.title}>
         <Plate district={district} name={name} />
       </h1>
+      <p className={styles.kicker}>Online randevu</p>
       <div className={styles.facts}>
         {status}
         <p className={styles.address}>{address}</p>
       </div>
-      {description && <p className={styles.description}>{description}</p>}
-      {photos.length > 0 && (
-        <ul className={styles.gallery} aria-label={`${name} fotoğrafları`}>
-          {photos.map((p, i) => (
-            <li key={p.id}>
-              {/* Fotoğraflar yüklenirken 1600px'e indirildi; ayrıca işlenmeden sunulur. */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={`/api/photos/${p.id}`}
-                alt={i === 0 ? `${name} dükkânı` : ""}
-                width={p.width}
-                height={p.height}
-                loading={i === 0 ? "eager" : "lazy"}
-                decoding="async"
-              />
-            </li>
-          ))}
-        </ul>
-      )}
-      {hours && (
-        <dl className={styles.hours} aria-label="Çalışma saatleri">
-          {ORDER.map((d) => {
-            const h = hours.find((x) => x.weekday === d);
-            return (
-              <div key={d}>
-                <dt>{DAYS[d]}</dt>
-                <dd className="num">{h ? `${h.opens} – ${h.closes}` : "Kapalı"}</dd>
-              </div>
-            );
-          })}
-          {lunch && (
-            <div className={styles.lunch}>
-              <dt>Öğle arası</dt>
-              <dd className="num">
-                {lunch.start} – {lunch.end}
-              </dd>
-            </div>
-          )}
-        </dl>
-      )}
     </header>
   );
 }

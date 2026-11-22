@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { loginOwner } from "@/app/panel/actions";
 import { LoginForm } from "@/components/admin/LoginForm";
 import { AuthShell } from "@/components/auth/AuthShell";
+import { RenewedNotice } from "@/components/auth/RenewedNotice";
 import { getCurrentUser } from "@/server/auth/current";
 
 export const metadata: Metadata = { title: "Berber girişi", robots: { index: false } };
@@ -28,6 +29,7 @@ export default function OwnerLoginPage() {
     >
       <Suspense>
         <AlreadySignedIn />
+        <RenewedNotice />
       </Suspense>
       <LoginForm login={loginOwner} forgotHref="/panel/sifremi-unuttum" />
     </AuthShell>

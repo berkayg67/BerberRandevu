@@ -6,6 +6,8 @@ import { dayLabel } from "@/components/booking/format";
 import { BlockForm } from "@/components/panel/BlockForm";
 import styles from "@/components/panel/panel.module.css";
 import { UnblockButton } from "@/components/panel/UnblockButton";
+import { SaveForm } from "@/components/panel/SaveForm";
+import { updateCustomerAction } from "@/app/panel/actions";
 import { formatPrice } from "@/lib/domain/money";
 import { formatPhone, toWhatsAppNumber } from "@/lib/domain/phone";
 import { formatTimeTr, utcToZoned } from "@/lib/domain/time";
@@ -72,6 +74,26 @@ async function Customer({ params }: { params: Promise<{ id: string }> }) {
           <span>Toplam</span>
         </div>
       </div>
+
+      <h2 className={styles.h2}>Bilgiler ve not</h2>
+      <SaveForm action={updateCustomerAction.bind(null, customer.id)} className={styles.card}>
+        <div style={{ paddingTop: 12 }}>
+          <div className="field">
+            <label htmlFor="cu-name">Ad soyad</label>
+            <input id="cu-name" name="name" className="input" defaultValue={customer.name} autoCapitalize="words" />
+          </div>
+          <div className="field">
+            <label htmlFor="cu-phone">Cep telefonu</label>
+            <input id="cu-phone" name="phone" className="input" inputMode="tel" defaultValue={formatPhone(customer.phone)} />
+          </div>
+          <div className="field" style={{ marginBottom: 0 }}>
+            <label htmlFor="cu-note">
+              Not <span className="hint">yalnızca siz görürsünüz</span>
+            </label>
+            <textarea id="cu-note" name="note" className="input" rows={3} maxLength={300} defaultValue={customer.note ?? ""} placeholder="Örn. 2 numara, sakalı kısa sever" />
+          </div>
+        </div>
+      </SaveForm>
 
       <h2 className={styles.h2}>Geçmiş</h2>
       <div className="group">

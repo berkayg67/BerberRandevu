@@ -28,6 +28,7 @@ import {
   time,
   timestamp,
   unique,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 
@@ -172,6 +173,8 @@ export const customers = pgTable(
     phone: text("phone").notNull(),
     /** KVKK aydınlatma metni ve WhatsApp bildirimi için açık rızanın en son verildiği an. */
     consentAt: timestamp("consent_at", { withTimezone: true }),
+    /** Yalnızca berberin gördüğü not ("sakalı kısa ister" gibi). */
+    note: text("note"),
     createdAt: createdAt(),
   },
   (t) => [
@@ -208,6 +211,8 @@ export const appointments = pgTable(
     noShow: boolean("no_show").notNull().default(false),
     cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
     cancelledBy: actor("cancelled_by"),
+    /** Yalnızca berberin gördüğü randevu notu. */
+    note: text("note"),
     createdAt: createdAt(),
   },
   (t) => [
@@ -350,7 +355,11 @@ export const passwordResetRequests = pgTable(
   (t) => [index("password_reset_open_idx").on(t.resolvedAt)],
 ).enableRLS();
 
-/** Dükkân fotoğrafları. Tarayıcıda küçültülüp (en uzun kenar 1600px, JPEG) veritabanında saklanır. */
+/**
+ * Dükkân görselleri: galeri fotoğrafları, dükkân logosu ve usta fotoğrafları.
+ * Tarayıcıda küçültülüp (en uzun kenar 1600px, JPEG) veritabanında saklanır.
+ * Dükkânın en fazla bir logosu, her ustanın en fazla bir fotoğrafı olur.
+ */
 export const shopPhotos = pgTable(
   "shop_photos",
   {
@@ -358,6 +367,9 @@ export const shopPhotos = pgTable(
     shopId: uuid("shop_id")
       .notNull()
       .references(() => shops.id, { onDelete: "cascade" }),
+    /** gallery | logo | staff */
+    kind: text("kind").notNull().default("gallery"),
+    staffId: uuid("staff_id").references(() => staff.id, { onDelete: "cascade" }),
     mime: text("mime").notNull(),
     data: bytea("data").notNull(),
     width: smallint("width").notNull(),
@@ -367,7 +379,75 @@ export const shopPhotos = pgTable(
   },
   (t) => [
     index("shop_photos_shop_idx").on(t.shopId, t.sort),
+    uniqueIndex("shop_photos_one_logo").on(t.shopId).where(sql`${t.kind} = 'logo'`),
+    uniqueIndex("shop_photos_one_per_staff").on(t.staffId).where(sql`${t.kind} = 'staff'`),
     check("shop_photos_mime", sql`${t.mime} in ('image/jpeg', 'image/webp')`),
     check("shop_photos_size", sql`octet_length(${t.data}) <= 1500000`),
+    check("shop_photos_kind", sql`${t.kind} in ('gallery', 'logo', 'staff')`),
+    check("shop_photos_staff_link", sql`(${t.kind} = 'staff') = (${t.staffId} is not null)`),
   ],
+).enableRLS();
+
+/** E-postayla gelen şifre sıfırlama bağlantıları. Bağlantıdaki anahtarın yalnızca SHA-256 özeti saklanır. */
+export const passwordResetTokens = pgTable(
+  "password_reset_tokens",
+  {
+    id: text("id").primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index("password_reset_tokens_user_idx").on(t.userId)],
+).enableRLS();
+
+/** Dükkânın kapalı olduğu günler (tatil, izin). Bu günlerde online randevu verilmez. */
+export const shopClosures = pgTable(
+  "shop_closures",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    shopId: uuid("shop_id")
+      .notNull()
+      .references(() => shops.id, { onDelete: "cascade" }),
+    startsOn: date("starts_on").notNull(),
+    endsOn: date("ends_on").notNull(),
+    note: text("note"),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("shop_closures_shop_idx").on(t.shopId, t.startsOn),
+    check("shop_closures_order", sql`${t.startsOn} <= ${t.endsOn}`),
+  ],
+).enableRLS();
+
+/** Dükkân adresi değişince eski adres yeni adrese yönlendirilir; paylaşılmış linkler bozulmaz. */
+export const shopSlugRedirects = pgTable(
+  "shop_slug_redirects",
+  {
+    oldSlug: text("old_slug").primaryKey(),
+    shopId: uuid("shop_id")
+      .notNull()
+      .references(() => shops.id, { onDelete: "cascade" }),
+    createdAt: createdAt(),
+  },
+  (t) => [index("shop_slug_redirects_shop_idx").on(t.shopId)],
+).enableRLS();
+
+/** Ziyaretçilerin bildirdiği içerikler (5651 sayılı Kanun kapsamında "içeriği bildir"). */
+export const contentReports = pgTable(
+  "content_reports",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    shopId: uuid("shop_id").references(() => shops.id, { onDelete: "set null" }),
+    /** Bildirilen sayfa adresi ya da açıklaması. */
+    target: text("target").notNull(),
+    reason: text("reason").notNull(),
+    details: text("details").notNull(),
+    contact: text("contact"),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+    resolution: text("resolution"),
+    createdAt: createdAt(),
+  },
+  (t) => [index("content_reports_open_idx").on(t.resolvedAt, t.createdAt)],
 ).enableRLS();

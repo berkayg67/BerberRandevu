@@ -89,6 +89,28 @@ export const templates = {
     if (f.shop.reviewUrl) lines.push("Yorum yazarsanız çok seviniriz:", f.shop.reviewUrl);
     return lines.join("\n");
   },
+  rescheduled(f: AppointmentFacts): string {
+    const { day, time } = when(f);
+    return [
+      `Merhaba ${firstName(f.customer.name)}, randevunuz güncellendi.`,
+      "",
+      `${day}, saat ${time}`,
+      `${f.serviceName}, usta ${f.staffName}`,
+      f.shop.address,
+      "",
+      `Uymuyorsa bu mesaja yanıt verebilir ya da ${f.shop.phone} numarasını arayabilirsiniz.`,
+      f.shop.name,
+    ].join("\n");
+  },
+  rescheduledShop(f: AppointmentFacts): string {
+    const { day, time } = when(f);
+    return [
+      "Randevu güncellendi",
+      `${f.customer.name}, ${formatPhone(f.customer.phone)}`,
+      `${day}, ${time}`,
+      `${f.serviceName}, usta ${f.staffName}`,
+    ].join("\n");
+  },
   cancelCustomer(f: AppointmentFacts): string {
     const { day, time } = when(f);
     return [
@@ -165,4 +187,36 @@ export function planCancellationMessages(
       sendAt: now,
     },
   ];
+}
+
+/**
+ * Randevu başka bir saate ya da ustaya taşınınca kuyruğa yazılacak mesajlar: müşteriye ve
+ * dükkâna "güncellendi", yeni saate göre hatırlatma ve (önceden vardıysa) teşekkür mesajı.
+ */
+export function planRescheduleMessages(f: AppointmentFacts, timing: MessageTiming, now: Date): MessageDraft[] {
+  const customerPhone = toWhatsAppNumber(f.customer.phone);
+  const drafts: MessageDraft[] = [
+    { kind: "confirm", recipient: "customer", toPhone: customerPhone, body: templates.rescheduled(f), sendAt: now },
+    {
+      kind: "new_booking",
+      recipient: "shop",
+      toPhone: toWhatsAppNumber(f.shop.notifyPhone),
+      body: templates.rescheduledShop(f),
+      sendAt: now,
+    },
+  ];
+  const reminderAt = new Date(f.startsAt.getTime() - timing.reminderMinutesBefore * 60_000);
+  if (reminderAt > now) {
+    drafts.push({ kind: "reminder", recipient: "customer", toPhone: customerPhone, body: templates.reminder(f), sendAt: reminderAt });
+  }
+  if (timing.includeThanks !== false) {
+    drafts.push({
+      kind: "thanks",
+      recipient: "customer",
+      toPhone: customerPhone,
+      body: templates.thanks(f),
+      sendAt: new Date(f.endsAt.getTime() + timing.thanksMinutesAfter * 60_000),
+    });
+  }
+  return drafts;
 }

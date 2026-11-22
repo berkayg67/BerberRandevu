@@ -1,5 +1,6 @@
 import "server-only";
-import { cookies } from "next/headers";
+import { createHash } from "node:crypto";
+import { cookies, headers } from "next/headers";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { getDb } from "@/server/db/client";
@@ -52,4 +53,23 @@ export async function endSession() {
   const token = store.get(SESSION_COOKIE)?.value;
   if (token) await deleteSession(getDb(), token);
   store.delete(SESSION_COOKIE);
+}
+
+/** Açık oturumun veritabanındaki kimliği (çerezdeki anahtarın özeti). */
+export async function currentSessionId(): Promise<string | undefined> {
+  const token = (await cookies()).get(SESSION_COOKIE)?.value;
+  return token ? createHash("sha256").update(token).digest("hex") : undefined;
+}
+
+/**
+ * Sitenin adresi (şifre sıfırlama bağlantıları için). SITE_URL tanımlıysa o kullanılır;
+ * değilse isteğin kendi adresi. Canlıda SITE_URL tanımlamak en güvenlisidir.
+ */
+export async function siteOrigin(): Promise<string> {
+  const fixed = process.env.SITE_URL?.trim().replace(/\/+$/, "");
+  if (fixed && /^https?:\/\//.test(fixed)) return fixed;
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
+  const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+  return `${proto}://${host}`;
 }

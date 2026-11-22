@@ -5,9 +5,10 @@
 import { and, asc, eq, gt, inArray } from "drizzle-orm";
 import { normalizeName } from "@/lib/domain/names";
 import { normalizePhone } from "@/lib/domain/phone";
+import { cleanSlugInput, slugProblem } from "@/lib/domain/slug";
 import { toMinutes, toHHMM } from "@/lib/domain/time";
 import { BookingError } from "@/server/booking/errors";
-import { appointments, services, shops, staff, workingHours } from "@/server/db/schema";
+import { appointments, services, shopSlugRedirects, shops, staff, workingHours } from "@/server/db/schema";
 import type { Db } from "@/server/db/types";
 
 const fail = (message: string): never => {
@@ -227,4 +228,36 @@ export async function saveStaff(
     .from(appointments)
     .where(and(inArray(appointments.staffId, [input.id]), eq(appointments.status, "active"), gt(appointments.startsAt, now)));
   return { upcoming: upcoming.length };
+}
+
+/* ------------------------------------------------------------------ */
+/* Dükkân adresi                                                       */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Müşteri sayfasının adresini (alanadi.com/<adres>) değiştirir. Eski adres yeni adrese yönlendirilir,
+ * paylaşılmış bağlantılar bozulmaz. Başkasına ait ya da sistem adresleri alınamaz.
+ */
+export async function changeSlug(db: Db, shopId: string, rawSlug: string) {
+  const slug = cleanSlugInput(rawSlug);
+  const problem = slugProblem(slug);
+  if (problem) fail(problem);
+  const [shop] = await db.select({ slug: shops.slug }).from(shops).where(eq(shops.id, shopId));
+  if (!shop) fail("Dükkân bulunamadı.");
+  if (shop!.slug === slug) return { slug, changed: false };
+
+  return db.transaction(async (tx) => {
+    const [taken] = await tx.select({ id: shops.id }).from(shops).where(eq(shops.slug, slug));
+    if (taken) fail("Bu adres başka bir dükkânda kullanılıyor.");
+    const [redirect] = await tx
+      .select({ shopId: shopSlugRedirects.shopId })
+      .from(shopSlugRedirects)
+      .where(eq(shopSlugRedirects.oldSlug, slug));
+    // Kendi eski adresine geri dönülebilir; başkasının eski adresi alınamaz.
+    if (redirect && redirect.shopId !== shopId) fail("Bu adres başka bir dükkânda kullanılıyor.");
+    if (redirect) await tx.delete(shopSlugRedirects).where(eq(shopSlugRedirects.oldSlug, slug));
+    await tx.insert(shopSlugRedirects).values({ oldSlug: shop!.slug, shopId }).onConflictDoNothing();
+    await tx.update(shops).set({ slug }).where(eq(shops.id, shopId));
+    return { slug, changed: true };
+  });
 }

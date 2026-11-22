@@ -5,6 +5,7 @@ import type { PublicShop } from "@/server/shops/service";
 import styles from "./booking.module.css";
 import { BookingFlow } from "./BookingFlow";
 import { MyAppointments } from "./MyAppointments";
+import { ShopInfo } from "@/components/shop/ShopInfo";
 
 type Tab = "randevu" | "randevularim";
 
@@ -28,7 +29,7 @@ export function CustomerApp({ shop }: { shop: PublicShop }) {
     <>
       <div className={styles.tabs} role="tablist" aria-label="Sayfa bölümleri">
         <button type="button" role="tab" className={styles.tab} aria-selected={tab === "randevu"} onClick={() => select("randevu")}>
-          Randevu al
+          Yeni randevu
         </button>
         <button
           type="button"
@@ -40,7 +41,16 @@ export function CustomerApp({ shop }: { shop: PublicShop }) {
           Randevularım
         </button>
       </div>
-      <div role="tabpanel">{tab === "randevu" ? <BookingFlow shop={shop} /> : <MyAppointments shop={shop} />}</div>
+      <div role="tabpanel">
+        {tab === "randevu" ? (
+          <>
+            <BookingFlow shop={shop} />
+            <ShopInfo shop={shop} />
+          </>
+        ) : (
+          <MyAppointments shop={shop} />
+        )}
+      </div>
     </>
   );
 }

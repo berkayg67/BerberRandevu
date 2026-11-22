@@ -143,3 +143,31 @@ export async function unblock(db: Db, shopId: string, blockId: string) {
 export async function listBlocks(db: Db, shopId: string) {
   return db.select().from(blocks).where(eq(blocks.shopId, shopId)).orderBy(asc(blocks.createdAt));
 }
+
+const MAX_CUSTOMER_NOTE = 300;
+
+/** Müşterinin adını, telefonunu ve berberin notunu günceller. Telefon aynı dükkânda tek olmalı. */
+export async function updateCustomer(
+  db: Db,
+  input: { shopId: string; customerId: string; name: string; phone: string; note: string },
+) {
+  const name = input.name.trim().replace(/\s+/g, " ");
+  const phone = normalizePhone(input.phone);
+  const note = input.note.trim();
+  if (name.length < 2 || name.length > 80) throw new BookingError("INVALID_INPUT", "Ad soyad 2 ile 80 karakter arasında olmalı.");
+  if (!phone) throw new BookingError("INVALID_PHONE", "Cep telefonu 05 ile başlamalı ve 11 haneli olmalı.");
+  if (note.length > MAX_CUSTOMER_NOTE) throw new BookingError("INVALID_INPUT", `Not en fazla ${MAX_CUSTOMER_NOTE} karakter olabilir.`);
+  const [clash] = await db
+    .select({ id: customers.id })
+    .from(customers)
+    .where(and(eq(customers.shopId, input.shopId), eq(customers.phone, phone)));
+  if (clash && clash.id !== input.customerId) {
+    throw new BookingError("INVALID_INPUT", "Bu telefon numarası başka bir müşteride kayıtlı.");
+  }
+  const [row] = await db
+    .update(customers)
+    .set({ name, phone, note: note || null })
+    .where(and(eq(customers.id, input.customerId), eq(customers.shopId, input.shopId)))
+    .returning({ id: customers.id });
+  if (!row) throw new BookingError("NOT_FOUND", "Müşteri bulunamadı.");
+}

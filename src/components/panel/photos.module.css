@@ -93,3 +93,39 @@
     background: var(--enamel-tint);
   }
 }
+
+.portrait {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 12px;
+}
+.portrait > p {
+  grid-column: 1 / -1;
+}
+.portraitActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+.smallFile {
+  position: relative;
+  min-height: 40px;
+  padding: 0 14px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.smallFile input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  cursor: pointer;
+}
+.linkDanger {
+  color: var(--oxblood);
+  font-size: 14px;
+  font-weight: 600;
+  min-height: 40px;
+}

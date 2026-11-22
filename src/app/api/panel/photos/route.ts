@@ -1,7 +1,7 @@
 import { getCurrentUser } from "@/server/auth/current";
 import { BookingError } from "@/server/booking/errors";
 import { getDb } from "@/server/db/client";
-import { addPhoto, MAX_PHOTO_BYTES } from "@/server/panel/photos";
+import { addPhoto, MAX_PHOTO_BYTES, setLogo, setStaffPhoto } from "@/server/panel/photos";
 
 /** Berberin fotoğraf yüklemesi. Tarayıcı fotoğrafı önceden küçültür (bkz. PhotoManager). */
 export async function POST(req: Request) {
@@ -15,11 +15,20 @@ export async function POST(req: Request) {
     const form = await req.formData();
     const file = form.get("file");
     if (!(file instanceof Blob)) return Response.json({ error: "Fotoğraf seçin." }, { status: 400 });
-    const row = await addPhoto(getDb(), user.shopId, {
+    const image = {
       data: new Uint8Array(await file.arrayBuffer()),
       width: Number(form.get("width")),
       height: Number(form.get("height")),
-    });
+    };
+    // kind: galeri (varsayılan), logo ya da usta fotoğrafı.
+    const kind = String(form.get("kind") ?? "gallery");
+    const db = getDb();
+    const row =
+      kind === "logo"
+        ? await setLogo(db, user.shopId, image)
+        : kind === "staff"
+          ? await setStaffPhoto(db, user.shopId, String(form.get("staffId") ?? ""), image)
+          : await addPhoto(db, user.shopId, image);
     return Response.json({ id: row.id }, { status: 201 });
   } catch (error) {
     if (error instanceof BookingError) return Response.json({ error: error.message }, { status: 400 });

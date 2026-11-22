@@ -21,6 +21,8 @@ import {
   setOwnerActive,
 } from "@/server/auth/service";
 import { getDb } from "@/server/db/client";
+import { removeShopPhoto } from "@/server/admin/photos";
+import { resolveContentReport } from "@/server/reports/content";
 import { approveShop, dismissResetRequest, rejectShop, resolveResetRequest } from "@/server/signup/service";
 
 export type FormState = {
@@ -242,4 +244,26 @@ export async function dismissResetAction(requestId: string) {
   await requireAdmin();
   await dismissResetRequest(getDb(), requestId);
   refresh();
+}
+
+/* ---------------- Fotoğraf denetimi ve içerik bildirimleri ---------------- */
+
+export async function removeShopPhotoAction(shopId: string, photoId: string) {
+  await requireAdmin();
+  await removeShopPhoto(getDb(), shopId, photoId);
+  refresh();
+}
+
+export async function resolveReportAction(
+  reportId: string,
+  input: { resolution: string; removeGallery: boolean },
+): Promise<{ error?: string }> {
+  await requireAdmin();
+  try {
+    await resolveContentReport(getDb(), { id: reportId, ...input });
+  } catch (error) {
+    return { error: messageOf(error) };
+  }
+  refresh();
+  return {};
 }

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import styles from "@/components/booking/booking.module.css";
@@ -10,7 +10,7 @@ import { LegalLinks } from "@/components/legal/LegalLinks";
 import { ShopHero } from "@/components/shop/ShopHero";
 import { BookingError } from "@/server/booking/errors";
 import { getDb } from "@/server/db/client";
-import { getPublicShop } from "@/server/shops/service";
+import { findRedirectSlug, getPublicShop } from "@/server/shops/service";
 
 const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
@@ -19,7 +19,12 @@ async function loadShop(slug: string) {
   try {
     return await getPublicShop(getDb(), slug);
   } catch (e) {
-    if (e instanceof BookingError && e.code === "NOT_FOUND") notFound();
+    if (e instanceof BookingError && e.code === "NOT_FOUND") {
+      // Berber adresini değiştirdiyse eski bağlantılar yeni adrese gider.
+      const moved = await findRedirectSlug(getDb(), slug);
+      if (moved && moved !== slug) permanentRedirect(`/${moved}`);
+      notFound();
+    }
     throw e;
   }
 }
@@ -55,17 +60,17 @@ async function Shop({ params }: { params: Promise<{ slug: string }> }) {
         name={shop.name}
         address={shop.address}
         status={<OpenStatus hours={shop.hours} lunch={shop.lunch} timeZone={shop.timezone} />}
-        hours={shop.hours}
-        lunch={shop.lunch}
-        description={shop.description}
-        photos={shop.photos}
+        logoId={shop.logoId}
+        staff={shop.staff}
       />
       <div className={styles.column}>
         <CustomerApp shop={shop} />
         <footer className={styles.legalFoot}>
           <LegalLinks />
           <p>
-            Randevu sistemi: <Link href="/">Tıraş Vakti</Link>
+            Randevu sistemi: <Link href="/">Tıraş Vakti</Link>. Bu sayfadaki bilgi ve fotoğrafları dükkân sahibi
+            yayımlar; Tıraş Vakti yer sağlayıcıdır.{" "}
+            <Link href={`/icerik-bildir?sayfa=${encodeURIComponent(`/${shop.slug}`)}`}>İçeriği bildir</Link>
           </p>
         </footer>
       </div>

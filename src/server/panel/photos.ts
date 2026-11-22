@@ -4,7 +4,7 @@
  */
 import { and, asc, count, eq, isNotNull } from "drizzle-orm";
 import { BookingError } from "@/server/booking/errors";
-import { shopPhotos, shops } from "@/server/db/schema";
+import { shopPhotos, shops, staff } from "@/server/db/schema";
 import type { Db } from "@/server/db/types";
 
 export const MAX_PHOTOS = 6;
@@ -19,8 +19,24 @@ export async function listPhotos(db: Db, shopId: string) {
   return db
     .select({ id: shopPhotos.id, width: shopPhotos.width, height: shopPhotos.height })
     .from(shopPhotos)
-    .where(eq(shopPhotos.shopId, shopId))
+    .where(and(eq(shopPhotos.shopId, shopId), eq(shopPhotos.kind, "gallery")))
     .orderBy(asc(shopPhotos.sort), asc(shopPhotos.createdAt));
+}
+
+/** Dükkân logosu ile usta fotoğraflarının kimlikleri (panel ve müşteri sayfası için). */
+export async function listPortraits(db: Db, shopId: string) {
+  const rows = await db
+    .select({ id: shopPhotos.id, kind: shopPhotos.kind, staffId: shopPhotos.staffId })
+    .from(shopPhotos)
+    .where(and(eq(shopPhotos.shopId, shopId), eq(shopPhotos.kind, "logo")));
+  const staffRows = await db
+    .select({ id: shopPhotos.id, staffId: shopPhotos.staffId })
+    .from(shopPhotos)
+    .where(and(eq(shopPhotos.shopId, shopId), eq(shopPhotos.kind, "staff")));
+  return {
+    logoId: rows[0]?.id ?? null,
+    staffPhotos: Object.fromEntries(staffRows.map((r) => [r.staffId!, r.id])) as Record<string, string>,
+  };
 }
 
 /** JPEG ve WebP dosyalarını ilk baytlarından tanır; uzantıya ya da beyana güvenmez. */
@@ -31,24 +47,61 @@ export function sniffImage(bytes: Uint8Array): "image/jpeg" | "image/webp" | nul
   return null;
 }
 
-export async function addPhoto(
-  db: Db,
-  shopId: string,
-  input: { data: Uint8Array; width: number; height: number },
-) {
+type PhotoInput = { data: Uint8Array; width: number; height: number };
+
+function checkImage(input: PhotoInput) {
   const mime = sniffImage(input.data);
   if (!mime || !MIMES.has(mime)) fail("Yalnızca fotoğraf (JPEG ya da WebP) yüklenebilir.");
   if (input.data.byteLength > MAX_PHOTO_BYTES) fail("Fotoğraf çok büyük.");
   const w = Math.round(input.width);
   const h = Math.round(input.height);
   if (!(w > 0 && h > 0 && w <= 4000 && h <= 4000)) fail("Fotoğraf ölçüleri geçersiz.");
-  const [{ n }] = await db.select({ n: count() }).from(shopPhotos).where(eq(shopPhotos.shopId, shopId));
+  return { mime: mime!, w, h };
+}
+
+export async function addPhoto(db: Db, shopId: string, input: PhotoInput) {
+  const { mime, w, h } = checkImage(input);
+  const [{ n }] = await db
+    .select({ n: count() })
+    .from(shopPhotos)
+    .where(and(eq(shopPhotos.shopId, shopId), eq(shopPhotos.kind, "gallery")));
   if (Number(n) >= MAX_PHOTOS) fail(`En fazla ${MAX_PHOTOS} fotoğraf ekleyebilirsiniz. Önce birini silin.`);
   const [row] = await db
     .insert(shopPhotos)
-    .values({ shopId, mime: mime!, data: input.data, width: w, height: h, sort: Number(n) })
+    .values({ shopId, mime, data: input.data, width: w, height: h, sort: Number(n) })
     .returning({ id: shopPhotos.id });
   return row;
+}
+
+/** Dükkân logosunu ekler ya da değiştirir (dükkânın tek logosu olur). */
+export async function setLogo(db: Db, shopId: string, input: PhotoInput) {
+  const { mime, w, h } = checkImage(input);
+  return db.transaction(async (tx) => {
+    await tx.delete(shopPhotos).where(and(eq(shopPhotos.shopId, shopId), eq(shopPhotos.kind, "logo")));
+    const [row] = await tx
+      .insert(shopPhotos)
+      .values({ shopId, kind: "logo", mime, data: input.data, width: w, height: h })
+      .returning({ id: shopPhotos.id });
+    return row;
+  });
+}
+
+/** Ustanın fotoğrafını ekler ya da değiştirir. Usta bu dükkâna ait olmalı. */
+export async function setStaffPhoto(db: Db, shopId: string, staffId: string, input: PhotoInput) {
+  const { mime, w, h } = checkImage(input);
+  const [member] = await db
+    .select({ id: staff.id })
+    .from(staff)
+    .where(and(eq(staff.id, staffId), eq(staff.shopId, shopId)));
+  if (!member) fail("Usta bulunamadı.");
+  return db.transaction(async (tx) => {
+    await tx.delete(shopPhotos).where(and(eq(shopPhotos.staffId, staffId), eq(shopPhotos.kind, "staff")));
+    const [row] = await tx
+      .insert(shopPhotos)
+      .values({ shopId, kind: "staff", staffId, mime, data: input.data, width: w, height: h })
+      .returning({ id: shopPhotos.id });
+    return row;
+  });
 }
 
 export async function deletePhoto(db: Db, shopId: string, photoId: string) {
@@ -83,5 +136,11 @@ export async function getOwnPhoto(db: Db, shopId: string, photoId: string) {
     .select({ mime: shopPhotos.mime, data: shopPhotos.data })
     .from(shopPhotos)
     .where(and(eq(shopPhotos.id, photoId), eq(shopPhotos.shopId, shopId)));
+  return row ?? null;
+}
+
+/** Yönetici için: dükkân onaylı olmasa da fotoğrafı getirir. */
+export async function getAnyPhoto(db: Db, photoId: string) {
+  const [row] = await db.select({ mime: shopPhotos.mime, data: shopPhotos.data }).from(shopPhotos).where(eq(shopPhotos.id, photoId));
   return row ?? null;
 }

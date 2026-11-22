@@ -8,6 +8,8 @@ import { listShopsOverview, type ShopsOverview } from "@/server/admin/service";
 import { requireAdmin } from "@/server/auth/current";
 import { getDb } from "@/server/db/client";
 import { PendingShops, ResetRequests } from "@/components/admin/Requests";
+import { ContentReports } from "@/components/admin/ContentReports";
+import { listContentReports, REPORT_REASONS, type ReportReason } from "@/server/reports/content";
 import { listPendingShops, listResetRequests } from "@/server/signup/service";
 
 const when = new Intl.DateTimeFormat("tr-TR", {
@@ -48,10 +50,11 @@ function statusTag(s: ShopsOverview["shops"][number]) {
 async function Overview() {
   await requireAdmin();
   const db = getDb();
-  const [data, pending, resets] = await Promise.all([
+  const [data, pending, resets, reports] = await Promise.all([
     listShopsOverview(db),
     listPendingShops(db),
     listResetRequests(db),
+    listContentReports(db, { open: true }),
   ]);
 
   return (
@@ -88,6 +91,19 @@ async function Overview() {
           }))}
         />
       }
+
+      <ContentReports
+        items={reports.map((r) => ({
+          id: r.id,
+          createdAt: when.format(r.createdAt),
+          target: r.target,
+          reasonLabel: REPORT_REASONS[r.reason as ReportReason] ?? r.reason,
+          details: r.details,
+          contact: r.contact,
+          shopId: r.shopId,
+          shopName: r.shopName,
+        }))}
+      />
 
       <div className={styles.stats}>
         <div>

@@ -1,8 +1,9 @@
-import { and, asc, eq, gt, lt } from "drizzle-orm";
+import { and, asc, eq, gt, lt, ne } from "drizzle-orm";
 import { computeSlots, type Slot } from "@/lib/domain/availability";
 import {
   planBookingMessages,
   planCancellationMessages,
+  planRescheduleMessages,
   type AppointmentFacts,
   type MessageDraft,
 } from "@/lib/domain/messages";
@@ -28,6 +29,7 @@ import {
   workingHours,
 } from "@/server/db/schema";
 import type { Db } from "@/server/db/types";
+import { isDateClosed } from "@/server/shops/closures";
 import { BookingError, isOverlapViolation } from "./errors";
 
 type Shop = typeof shops.$inferSelect;
@@ -78,18 +80,36 @@ export async function getDaySlots(
     shopId: string;
     serviceId: string;
     date: LocalDate;
-    /** Dükkândan eklenen randevularda "en geç ne zaman" kuralı uygulanmaz. */
+    /** Dükkândan eklenen randevularda "en geç ne zaman" kuralı ve kapalı günler uygulanmaz. */
     source: "online" | "panel";
+    /** Taşınan randevunun kendisi dolu sayılmaz. */
+    excludeAppointmentId?: string;
   },
   now: Date = new Date(),
 ): Promise<Slot[]> {
-  if (!isLocalDate(params.date)) throw new BookingError("INVALID_INPUT", "Tarih geçersiz.");
   const shop = await getShop(db, params.shopId);
   const service = await getActiveService(db, shop.id, params.serviceId);
+  return daySlotsFor(db, shop, { ...params, durationMinutes: service.durationMinutes }, now);
+}
+
+async function daySlotsFor(
+  db: Db,
+  shop: Shop,
+  params: {
+    date: LocalDate;
+    durationMinutes: number;
+    source: "online" | "panel";
+    excludeAppointmentId?: string;
+  },
+  now: Date,
+): Promise<Slot[]> {
+  if (!isLocalDate(params.date)) throw new BookingError("INVALID_INPUT", "Tarih geçersiz.");
 
   const today = todayIn(shop.timezone, now);
   if (params.date < today) return [];
   if (params.source === "online" && params.date > addDays(today, shop.bookAheadDays - 1)) return [];
+  // Tatil ve izin günlerinde online randevu verilmez; dükkân kendi elinden yine de ekleyebilir.
+  if (params.source === "online" && (await isDateClosed(db, shop.id, params.date))) return [];
 
   const [hours] = await db
     .select()
@@ -119,6 +139,7 @@ export async function getDaySlots(
         eq(appointments.status, "active"),
         lt(appointments.startsAt, dayEnd),
         gt(appointments.blockedUntil, dayStart),
+        params.excludeAppointmentId ? ne(appointments.id, params.excludeAppointmentId) : undefined,
       ),
     );
 
@@ -133,7 +154,7 @@ export async function getDaySlots(
     slotMinutes: shop.slotMinutes,
     bufferMinutes: shop.bufferMinutes,
     minNoticeMinutes: params.source === "online" ? shop.minNoticeMinutes : 0,
-    durationMinutes: service.durationMinutes,
+    durationMinutes: params.durationMinutes,
     staffIds: staffRows.map((s) => s.id),
     busy,
     now,
@@ -339,6 +360,117 @@ export async function cancelAppointment(
       planCancellationMessages(facts, input.by, now),
     );
     return { appointment, messages: queued };
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/* Randevuyu taşıma (berber)                                           */
+/* ------------------------------------------------------------------ */
+
+export type RescheduleInput = {
+  shopId: string;
+  appointmentId: string;
+  date: LocalDate;
+  /** "09:30" */
+  time: string;
+  /** Boşsa mevcut usta; "any" ilk boş usta. */
+  staffId?: string;
+  /** Boşsa mevcut hizmet. */
+  serviceId?: string;
+};
+
+/**
+ * Berber, randevuyu başka güne, saate, ustaya ya da hizmete taşır. Çakışma kuralı yeni saat için de
+ * geçerlidir; kendi eski saati dolu sayılmaz. Müşteriye "güncellendi" mesajı gider, eski hatırlatma
+ * ve teşekkür mesajları iptal olur, yenileri yeni saate göre yazılır.
+ */
+export async function rescheduleAppointment(db: Db, input: RescheduleInput, now: Date = new Date()) {
+  const shop = await getShop(db, input.shopId);
+  const [row] = await db
+    .select({ appointment: appointments, customer: customers })
+    .from(appointments)
+    .innerJoin(customers, eq(customers.id, appointments.customerId))
+    .where(and(eq(appointments.id, input.appointmentId), eq(appointments.shopId, shop.id)));
+  if (!row) throw new BookingError("NOT_FOUND", "Randevu bulunamadı.");
+  const current = row.appointment;
+  if (current.status === "cancelled") throw new BookingError("ALREADY_CANCELLED", "İptal edilmiş randevu taşınamaz.");
+  if (current.endsAt <= now) throw new BookingError("TOO_LATE", "Geçmiş bir randevu taşınamaz.");
+
+  // Hizmet değişmediyse randevunun kendi süresi ve fiyatı korunur.
+  const changedService = Boolean(input.serviceId && input.serviceId !== current.serviceId);
+  const service = changedService ? await getActiveService(db, shop.id, input.serviceId!) : null;
+  const durationMinutes = service
+    ? service.durationMinutes
+    : Math.round((current.endsAt.getTime() - current.startsAt.getTime()) / 60_000);
+
+  const slots = await daySlotsFor(
+    db,
+    shop,
+    { date: input.date, durationMinutes, source: "panel", excludeAppointmentId: current.id },
+    now,
+  );
+  const slot = slots.find((s) => s.time === input.time);
+  if (!slot) throw new BookingError("SLOT_UNAVAILABLE", "Bu saat randevuya açık değil.");
+
+  const wanted = input.staffId ?? current.staffId;
+  const candidates = wanted === "any" ? slot.freeStaffIds : slot.freeStaffIds.filter((id) => id === wanted);
+  if (candidates.length === 0) throw new BookingError("SLOT_TAKEN", "Bu saat dolu. Başka bir saat seçin.");
+
+  const startsAt = slot.startsAt;
+  const endsAt = new Date(startsAt.getTime() + durationMinutes * 60_000);
+  const blockedUntil = new Date(endsAt.getTime() + shop.bufferMinutes * 60_000);
+
+  return db.transaction(async (tx) => {
+    let updated: Appointment | undefined;
+    for (const staffId of candidates) {
+      try {
+        updated = await tx.transaction(async (savepoint) => {
+          const [r] = await savepoint
+            .update(appointments)
+            .set({
+              staffId,
+              startsAt,
+              endsAt,
+              blockedUntil,
+              ...(service ? { serviceId: service.id, serviceName: service.name, priceKurus: service.priceKurus } : {}),
+            })
+            .where(eq(appointments.id, current.id))
+            .returning();
+          return r;
+        });
+        break;
+      } catch (error) {
+        if (!isOverlapViolation(error)) throw error;
+      }
+    }
+    if (!updated) throw new BookingError("SLOT_TAKEN", "Bu saat az önce doldu. Başka bir saat seçin.");
+
+    const [staffRow] = await tx.select({ name: staff.name }).from(staff).where(eq(staff.id, updated.staffId));
+    // Teşekkür mesajı önceden planlanmışsa (müşteri rıza verdiyse ya da berber eklediyse) yeni saate göre yeniden planlanır.
+    const hadThanks =
+      (
+        await tx
+          .select({ id: messages.id })
+          .from(messages)
+          .where(and(eq(messages.appointmentId, current.id), eq(messages.kind, "thanks")))
+      ).length > 0;
+    // Gönderilmemiş eski mesajlar (onay, hatırlatma, teşekkür) iptal edilir.
+    await tx
+      .update(messages)
+      .set({ status: "cancelled" })
+      .where(and(eq(messages.appointmentId, current.id), eq(messages.status, "scheduled")));
+
+    const drafts = planRescheduleMessages(
+      toFacts(shop, row.customer, updated, staffRow?.name ?? ""),
+      {
+        reminderMinutesBefore: shop.reminderMinutesBefore,
+        thanksMinutesAfter: shop.thanksMinutesAfter,
+        includeThanks: hadThanks && !updated.noShow,
+      },
+      now,
+    );
+    const queued = await insertMessages(tx, shop.id, updated.id, drafts);
+    return { appointment: updated, staffName: staffRow?.name ?? "", messages: queued };
   });
 }
 
