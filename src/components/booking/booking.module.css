@@ -558,3 +558,12 @@
 .wiz .strip {
   margin: 0 -20px;
 }
+
+/* Randevu penceresinde gün şeridi kenara yaslanmaz ve soluklaşmaz (masaüstünde de). */
+.wiz .strip {
+  margin: 0 -20px;
+  padding: 4px 20px 8px;
+  scroll-padding-inline: 20px;
+  -webkit-mask-image: none;
+  mask-image: none;
+}
