@@ -4,22 +4,26 @@ import postgres from "postgres";
 import * as schema from "./schema";
 import type { Db } from "./types";
 
-const globalForDb = globalThis as unknown as { berberSql?: ReturnType<typeof postgres> };
+const globalForDb = globalThis as unknown as { berberDb?: Db };
 
-function connect() {
+/**
+ * Veritabanı bağlantısını ilk kullanıldığında açar. Derleme sırasında
+ * (DATABASE_URL yokken) dosyanın içe aktarılması hata vermez.
+ */
+export function getDb(): Db {
+  if (globalForDb.berberDb) return globalForDb.berberDb;
+
   const url = process.env.DATABASE_URL;
   if (!url) {
-    throw new Error(
-      "DATABASE_URL tanımlı değil. .env.local dosyasını oluşturun (bkz. .env.example).",
-    );
+    throw new Error("DATABASE_URL tanımlı değil. .env.local dosyasını kontrol edin (bkz. .env.example).");
   }
   // Supabase'in "transaction pooler" bağlantısı hazır sorguları (prepared
   // statements) desteklemediği için kapatılır.
-  return postgres(url, { prepare: false, max: 5 });
+  const max = Number(process.env.DATABASE_POOL_MAX ?? 5) || 5;
+  const sql = postgres(url, { prepare: false, max });
+  const db: Db = drizzle(sql, { schema });
+
+  // Geliştirme sırasında her kod değişikliğinde yeni bağlantı açılmasın.
+  globalForDb.berberDb = db;
+  return db;
 }
-
-// Geliştirme sırasında her kod değişikliğinde yeni bağlantı açılmasın.
-const sql = globalForDb.berberSql ?? connect();
-if (process.env.NODE_ENV !== "production") globalForDb.berberSql = sql;
-
-export const db: Db = drizzle(sql, { schema });

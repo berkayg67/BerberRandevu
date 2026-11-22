@@ -28,7 +28,8 @@ Ardından tarayıcıda http://localhost:3000 adresini açın.
 | `npm test` | Testleri çalıştırır (bellek içi PostgreSQL ile, internet gerekmez) |
 | `npm run check` | Lint, tip kontrolü ve testleri birlikte çalıştırır |
 | `npm run db:generate` | Şema değişikliğinden yeni göç (migration) dosyası üretir |
-| `npm run db:migrate` | Göçleri `.env.local` içindeki veritabanına uygular |
+| `npm run db:migrate` | Tabloları `.env.local` içindeki veritabanına kurar / günceller |
+| `npm run db:seed` | Demo dükkânı (berber-demo) ekler; varsa dokunmaz |
 | `npm run db:studio` | Veritabanını tarayıcıda gösteren aracı açar |
 
 ## Klasör yapısı
@@ -56,6 +57,20 @@ PostgreSQL kullanılır (Supabase). Önemli kurallar veritabanının kendisinde 
 
 Bağlantı bilgileri `.env.local` dosyasındadır (Git'e gitmez). Örnek: `.env.example`.
 
+## API
+
+| İstek | Ne yapar |
+| --- | --- |
+| `GET /api/shops/{slug}` | Dükkân bilgileri, hizmetler, ustalar, çalışma saatleri |
+| `GET /api/shops/{slug}/slots?service=&date=&staff=` | Bir günün boş ve dolu saatleri |
+| `POST /api/shops/{slug}/appointments` | Randevu alır |
+| `POST /api/shops/{slug}/appointments/lookup` | Telefona ait aktif randevular ("Randevularım") |
+| `POST /api/shops/{slug}/appointments/{id}/cancel` | Müşterinin kendi randevusunu iptal etmesi |
+
+Hatalar `{ "error": { "code", "message" } }` biçiminde, Türkçe açıklamayla döner.
+
+> Not: "Randevularım" ve iptal şimdilik yalnızca telefon numarasıyla çalışır. Canlıya çıkmadan önce WhatsApp doğrulama kodu ve istek sınırlama eklenecek (6. adım).
+
 ## Sürekli entegrasyon
 
 `.github/workflows/ci.yml` her `main` push'unda ve her pull request'te lint, tip kontrolü, testler ve derlemeyi çalıştırır.
@@ -66,7 +81,7 @@ Bağlantı bilgileri `.env.local` dosyasındadır (Git'e gitmez). Örnek: `.env.
 2. Tasarım sistemi, aydınlık / karanlık mod ✅
 3. Backend
    - 3a. Şema, çakışma ve engelleme kuralları, mesaj kuyruğu, testler ✅
-   - 3b. Supabase bağlantısı, örnek dükkân verisi, API
+   - 3b. Supabase bağlantısı, örnek dükkân verisi, API ✅
 4. Müşteri sayfası: randevu alma ve "Randevularım"
 5. Berber paneli ve girişi: takvim, mesajlar, müşteriler, ayarlar
 6. WhatsApp Business API ve mesaj gönderen zamanlayıcı
