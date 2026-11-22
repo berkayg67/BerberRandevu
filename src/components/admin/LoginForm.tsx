@@ -1,10 +1,12 @@
 "use client";
 
 import { useActionState } from "react";
-import { login, type FormState } from "@/app/admin/actions";
 
-export function LoginForm() {
-  const [state, action, pending] = useActionState<FormState, FormData>(login, {});
+type State = { error?: string; values?: Record<string, string> };
+
+/** Yönetici ve berber girişinin ortak formu; hangi işlemin çağrılacağı dışarıdan verilir. */
+export function LoginForm({ login }: { login: (prev: State, fd: FormData) => Promise<State> }) {
+  const [state, action, pending] = useActionState<State, FormData>(login, {});
   return (
     <form action={action} noValidate>
       <div className="field">

@@ -13,7 +13,13 @@ import {
   type ShopInput,
 } from "@/server/admin/service";
 import { endSession, requireAdmin, startSession } from "@/server/auth/current";
-import { authenticate } from "@/server/auth/service";
+import {
+  AccountError,
+  authenticate,
+  createOwner,
+  resetOwnerPassword,
+  setOwnerActive,
+} from "@/server/auth/service";
 import { getDb } from "@/server/db/client";
 
 export type FormState = {
@@ -162,5 +168,36 @@ export async function markPaidAction(
 export async function undoPaymentAction(shopId: string, period: string) {
   await requireAdmin();
   await removePayment(getDb(), shopId, period);
+  refresh();
+}
+
+/* ---------------- Berber hesapları ---------------- */
+
+export type OwnerState = { error?: string; credentials?: { email: string; password: string } };
+
+export async function createOwnerAction(shopId: string, _prev: OwnerState, fd: FormData): Promise<OwnerState> {
+  await requireAdmin();
+  try {
+    const credentials = await createOwner(getDb(), { shopId, email: text(fd, "email"), name: text(fd, "name") });
+    refresh();
+    return { credentials };
+  } catch (error) {
+    if (error instanceof AccountError) return { error: error.message };
+    return { error: messageOf(error) };
+  }
+}
+
+export async function resetOwnerAction(shopId: string, userId: string): Promise<OwnerState> {
+  await requireAdmin();
+  try {
+    return { credentials: await resetOwnerPassword(getDb(), { shopId, userId }) };
+  } catch (error) {
+    return { error: error instanceof AccountError ? error.message : messageOf(error) };
+  }
+}
+
+export async function setOwnerActiveAction(shopId: string, userId: string, active: boolean) {
+  await requireAdmin();
+  await setOwnerActive(getDb(), { shopId, userId, active });
   refresh();
 }

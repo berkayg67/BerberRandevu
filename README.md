@@ -67,6 +67,15 @@ Her dükkânın kendi adresi vardır: `/berber-demo`, `/berber-murat-dursun` gib
 - Aynı saati o sırada başkası alırsa müşteriye söylenir ve saatler yenilenir.
 - Ad ve telefon bir sonraki randevu için yalnızca o cihazda hatırlanır.
 
+## Berber paneli
+
+Her dükkânın sahibi `/panel` adresinden kendi hesabıyla girer. Hesabı yönetici açar (Yönetim → dükkân → Berber hesabı); şifre bir kez gösterilir ve berbere iletilir.
+
+- **Takvim:** günün randevuları saat sırasıyla; randevu sayısı, beklenen ciro, iptal ve gelmeyenler.
+- **Randevu ekle:** telefonla ya da dükkânda alınan randevular; yalnızca boş saatler listelenir. Engelli müşteriye ek onayla verilebilir.
+- **Randevu ayrıntısı:** müşteriyi arama, WhatsApp'tan yazma, iptal (müşteriye haber verilir), "gelmedi" işareti (teşekkür mesajı gitmez).
+- Berber yalnızca kendi dükkânını görür; dükkân kimliği her işlemde oturumdan alınır.
+
 ## Yönetim paneli
 
 `/admin` adresi yalnızca yönetici hesabıyla açılır. Buradan:
@@ -111,5 +120,8 @@ Hatalar `{ "error": { "code", "message" } }` biçiminde, Türkçe açıklamayla 
    - 3b. Supabase bağlantısı, örnek dükkân verisi, API ✅
 4. Yönetim paneli: dükkânlar ve tahsilat ✅
 5. Müşteri sayfası: randevu alma ve "Randevularım" ✅
-6. Berber paneli ve girişi: takvim, mesajlar, müşteriler, ayarlar
+6. Berber paneli
+   - 6a. Berber hesabı, giriş, takvim ✅
+   - 6b. Müşteriler ve engelleme
+   - 6c. Mesajlar ve ayarlar
 7. WhatsApp Business API ve mesaj gönderen zamanlayıcı

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import styles from "@/components/admin/admin.module.css";
+import { OwnerAccounts } from "@/components/admin/OwnerAccounts";
 import { PeriodRow } from "@/components/admin/PeriodRow";
 import { ShopForm } from "@/components/admin/ShopForm";
 import { formatPrice } from "@/lib/domain/money";
@@ -11,6 +12,7 @@ import { formatPhone } from "@/lib/domain/phone";
 import { formatDayTr } from "@/lib/domain/time";
 import { getShopForAdmin } from "@/server/admin/service";
 import { requireAdmin } from "@/server/auth/current";
+import { listOwners } from "@/server/auth/service";
 import { getDb } from "@/server/db/client";
 
 export const metadata: Metadata = { title: "Dükkân, Yönetim", robots: { index: false } };
@@ -39,6 +41,7 @@ async function Detail({ params }: { params: Promise<{ id: string }> }) {
   if (!data) notFound();
   const { shop } = data;
   const fee = shop.monthlyFeeKurus;
+  const owners = await listOwners(getDb(), shop.id);
 
   return (
     <>
@@ -94,6 +97,21 @@ async function Detail({ params }: { params: Promise<{ id: string }> }) {
           />
         ))}
       </div>
+
+      <h2 className={styles.h2}>Berber hesabı</h2>
+      <p className={styles.sub} style={{ marginBottom: 12 }}>
+        Berber bu hesapla /panel adresinden kendi randevularını yönetir.
+      </p>
+      <OwnerAccounts
+        shopId={shop.id}
+        owners={owners.map((o) => ({
+          id: o.id,
+          email: o.email,
+          name: o.name,
+          active: o.active,
+          lastLogin: o.lastLoginAt ? formatDayTr(o.lastLoginAt, "Europe/Istanbul") : null,
+        }))}
+      />
 
       <h2 className={styles.h2}>Bilgiler</h2>
       <ShopForm

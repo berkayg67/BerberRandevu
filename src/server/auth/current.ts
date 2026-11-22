@@ -24,6 +24,16 @@ export async function requireAdmin(): Promise<SessionUser> {
   return user;
 }
 
+/**
+ * Berber hesabı değilse panel girişine yönlendirir. Dönen shopId her panel
+ * işleminde kullanılır; istekle gelen dükkân kimliğine asla güvenilmez.
+ */
+export async function requireOwner(): Promise<SessionUser & { shopId: string }> {
+  const user = await getCurrentUser();
+  if (!user || user.role !== "owner" || !user.shopId) redirect("/panel/giris");
+  return { ...user, shopId: user.shopId };
+}
+
 /** Yalnızca Server Action içinden çağrılır (çerez yazar). */
 export async function startSession(userId: string) {
   const { token, expiresAt } = await createSession(getDb(), userId);

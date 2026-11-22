@@ -2,7 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { and, eq, gt, lt } from "drizzle-orm";
 import { sessions, users } from "@/server/db/schema";
 import type { Db } from "@/server/db/types";
-import { hashPassword, verifyPassword } from "./password";
+import { generatePassword, hashPassword, verifyPassword } from "./password";
 
 export const SESSION_DAYS = 14;
 
@@ -72,4 +72,65 @@ export async function upsertAdmin(db: Db, input: { email: string; name: string; 
   }
   await db.insert(users).values({ email, name: input.name, passwordHash, role: "admin" });
   return { created: true };
+}
+
+/* ------------------------------------------------------------------ */
+/* Dükkân (berber) hesapları                                           */
+/* ------------------------------------------------------------------ */
+
+export class AccountError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "AccountError";
+  }
+}
+
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** Bir dükkâna giriş hesabı açar. Şifreyi üretir ve bir kez döner. */
+export async function createOwner(db: Db, input: { shopId: string; email: string; name: string }) {
+  const email = input.email.trim().toLowerCase();
+  const name = input.name.trim();
+  if (!EMAIL.test(email)) throw new AccountError("Geçerli bir e-posta adresi yazın.");
+  if (name.length < 2) throw new AccountError("Hesap sahibinin adını yazın.");
+  const [taken] = await db.select({ id: users.id }).from(users).where(eq(users.email, email));
+  if (taken) throw new AccountError("Bu e-posta adresiyle zaten bir hesap var.");
+  const password = generatePassword();
+  await db.insert(users).values({
+    email,
+    name,
+    passwordHash: await hashPassword(password),
+    role: "owner",
+    shopId: input.shopId,
+  });
+  return { email, password };
+}
+
+/** Dükkân hesabının şifresini yeniler; açık oturumları kapatır. */
+export async function resetOwnerPassword(db: Db, input: { shopId: string; userId: string }) {
+  const password = generatePassword();
+  const [user] = await db
+    .update(users)
+    .set({ passwordHash: await hashPassword(password), active: true })
+    .where(and(eq(users.id, input.userId), eq(users.shopId, input.shopId), eq(users.role, "owner")))
+    .returning({ email: users.email });
+  if (!user) throw new AccountError("Hesap bulunamadı.");
+  await db.delete(sessions).where(eq(sessions.userId, input.userId));
+  return { email: user.email, password };
+}
+
+/** Dükkân hesabını kapatır ya da açar. Kapatınca açık oturumlar da kapanır. */
+export async function setOwnerActive(db: Db, input: { shopId: string; userId: string; active: boolean }) {
+  await db
+    .update(users)
+    .set({ active: input.active })
+    .where(and(eq(users.id, input.userId), eq(users.shopId, input.shopId), eq(users.role, "owner")));
+  if (!input.active) await db.delete(sessions).where(eq(sessions.userId, input.userId));
+}
+
+export async function listOwners(db: Db, shopId: string) {
+  return db
+    .select({ id: users.id, email: users.email, name: users.name, active: users.active, lastLoginAt: users.lastLoginAt })
+    .from(users)
+    .where(and(eq(users.shopId, shopId), eq(users.role, "owner")));
 }

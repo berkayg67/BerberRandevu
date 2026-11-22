@@ -5,6 +5,7 @@ import styles from "@/components/admin/admin.module.css";
 import { LoginForm } from "@/components/admin/LoginForm";
 import { Plate } from "@/components/ui/Plate";
 import { getCurrentUser } from "@/server/auth/current";
+import { login } from "@/app/admin/actions";
 
 export const metadata: Metadata = { title: "Yönetici girişi", robots: { index: false } };
 
@@ -25,7 +26,7 @@ export default function LoginPage() {
         <Plate district="Yönetim" name="BerberRandevu" />
         <h1>Yönetici girişi</h1>
         <p>Bu sayfa yalnızca sistem yöneticisi içindir.</p>
-        <LoginForm />
+        <LoginForm login={login} />
       </div>
     </div>
   );
